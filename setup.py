@@ -22,7 +22,7 @@ def get_version():
     except Exception:  # pylint: disable=broad-except
         sha = "Unknown"
 
-    if os.getenv("TEXTCOMPLEXITYCOMPUTER_RELEASE_BUILD") != "1":
+    if os.getenv("TCC_RELEASE_BUILD") != "1":
         version += ".dev1"
         if sha != "Unknown":
             version += "+" + sha[:7]
@@ -30,7 +30,7 @@ def get_version():
 
 
 def write_version_python_file(version):
-    version_python_file = os.path.join(current_file_path, "TextComplexityComputer", "version.py")
+    version_python_file = os.path.join(current_file_path, "tcc", "tcc/version.py")
     with open(version_python_file, "w", encoding="utf-8") as f:
         f.write(f"__version__ = {repr(version)}\n")
 
@@ -44,7 +44,7 @@ def main():
 
     packages = find_packages()
     setup(
-        name="TextComplexityComputer",
+        name="tcc",
         version=version,
         author="le-smog",
         author_email="le-smog@gmx.com",
@@ -59,10 +59,10 @@ def main():
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
             "Topic :: Software Development :: Libraries",
-            "Topic :: Software Development :: Libraries :: Python Modules"
+            "Topic :: Software Development :: Libraries :: Python Modules",
         ],
         packages=packages,
-        install_requires=["spacy", "regex", "numpy", "pandas", "pyahocorasick", "fr_core_news_md", "sklearn"],
+        install_requires=["spacy", "numpy", "pandas", "pyahocorasick", "scikit-learn"],
         python_requires=">=3.7",
         description="A library for evaluate text difficulty.",
         long_description=readme,
