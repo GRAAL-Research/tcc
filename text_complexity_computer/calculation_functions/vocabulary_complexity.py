@@ -21,7 +21,7 @@ def pa(sp_object: Doc, language: str) -> float:
     Returns:
         float: The average number of word not in a reference list.
     """
-    data = pkgutil.get_data(__name__, os.path.join("resources", language, "easy_words.txt"))
+    data = pkgutil.get_data(__name__, os.path.join("../resources", language, "easy_words.txt"))
     utf8data = data.decode("utf-8")
 
     count = 0
@@ -69,7 +69,7 @@ def uni_gram_lem(sp_object: Doc, language: str) -> float:
         float: the average probability value of words according to a frequency list.
     """
     normalized_prob = 0
-    data = pkgutil.get_data(__name__, os.path.join("resources", language, "word_frequencies.json"))
+    data = pkgutil.get_data(__name__, os.path.join("../resources", language, "word_frequencies.json"))
     lexique_dic = json.loads(data.decode())
     lexique_keys = list(lexique_dic.keys())
 

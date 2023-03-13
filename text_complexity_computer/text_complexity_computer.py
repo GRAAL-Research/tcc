@@ -41,8 +41,6 @@ class TextComplexityComputer:
             language (str): The language to use, either `'fr'` or `'en'`. By default, `'fr'`.
             scaler (Union[str, None]): chose the scaler between StandardScaler (by default), MinMaxScaler and none.
         """
-        root_path = os.path.abspath(os.path.dirname(__file__))
-
         self.language = language
         if self.language == "fr":
             try:
@@ -50,6 +48,7 @@ class TextComplexityComputer:
             except OSError:
                 print(download('fr_core_news_sm'))
                 self.tagger = spacy.load("fr_core_news_sm")
+
         elif self.language == "en":
             try:
                 self.tagger = spacy.load("fr_core_news_sm")
@@ -59,18 +58,15 @@ class TextComplexityComputer:
         else:
             raise ValueError(f"language can be 'fr' or 'en', not {self.language}")
 
-        scaler_path = f"{self.language}_{scaler}.pickle"
-        model_path = f"{self.language}_model.pickle"
+        biberpy.language = self.language
 
         self.word_lists, self.mwe_list = read_word_lists(
-            open(os.path.join(root_path, "resources", self.language, f"{self.language}.properties"), encoding="utf8"),
+            os.path.join(os.path.dirname(__file__), 'resources', self.language, f"{self.language}.properties"),
             verbosity=verbosity,
         )
         self.tag_list = read_num_list(
-            open(os.path.join(root_path, "resources", self.language + f"{self.language}.tag.num"), encoding="utf8")
+            os.path.join(os.path.dirname(__file__), 'resources', self.language, f"{self.language}.tag.num"),
         )
-
-        biberpy.language = self.language
 
         biberpy.word_lists = self.word_lists
         biberpy.mwe_list = self.mwe_list
@@ -79,17 +75,20 @@ class TextComplexityComputer:
 
         self.tagger.max_length = 5000000
 
-        path = os.path.join(root_path, "model_dependencies")
-        # Get scaler
         if scaler:
-            with open(os.path.join(path, scaler_path), "rb") as rb:
-                self.scaler = pickle.load(rb)
+            with open(
+                os.path.join(os.path.dirname(__file__), 'resources', self.language, f"{self.language}_{scaler}.pickle"),
+                "rb",
+            ) as file:
+                self.scaler = pickle.load(file)
         else:
             warnings.warn("You are running TextComplexityComputer without scaler (scaler=None).")
             self.scaler = None
 
         # Get Classifier
-        with open(os.path.join(path, model_path), "rb") as rb:
+        with open(
+            os.path.join(os.path.dirname(__file__), 'resources', self.language, f"{self.language}_model.pickle"), "rb"
+        ) as rb:
             self.model = pickle.load(rb)
 
     def get_metrics_scores(

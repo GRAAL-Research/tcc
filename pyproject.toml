@@ -7,4 +7,3 @@ extend-exclude = "/(slides)/"
 testpaths = [
     "tests",
 ]
-

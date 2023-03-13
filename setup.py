@@ -1,3 +1,4 @@
+import glob
 import os
 import subprocess
 
@@ -62,12 +63,13 @@ def main():
             "Topic :: Software Development :: Libraries :: Python Modules",
         ],
         packages=packages,
+        data_files=[("resources.fr", glob.glob('*/*/fr/*')), ("resources.en", glob.glob('*/*/en/*'))],
+        include_package_data=True,
         install_requires=["spacy", "numpy", "pandas", "pyahocorasick", "scikit-learn"],
         python_requires=">=3.7",
         description="A library for evaluate text difficulty.",
         long_description=readme,
         long_description_content_type="text/markdown",
-        # extras_require=["matplotlib"]
     )
 
 
