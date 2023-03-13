@@ -1,6 +1,6 @@
 ## dev
 
-## Beta (0.1.4)
+## Beta (0.1.5)
 
 - Initial release of the library
 - Fixed missing data package

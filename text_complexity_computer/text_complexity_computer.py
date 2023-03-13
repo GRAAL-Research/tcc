@@ -51,7 +51,7 @@ class TextComplexityComputer:
                 self.tagger = spacy.load(model_name)
 
         elif self.language == "en":
-            model_name = "en_core_news_md"
+            model_name = "en_core_web_sm"
             try:
                 self.tagger = spacy.load(model_name)
             except OSError:
