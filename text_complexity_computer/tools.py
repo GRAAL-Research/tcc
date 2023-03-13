@@ -24,6 +24,6 @@ def clean_text(text: str) -> str:
     text = re.sub(r"\d+\)?\. ", " ", text)
     text = re.sub(r"\(?\d+(\.\d+)*\)?\.? ", " ", text)
     text = re.sub(r"\(?\w+\) ", " ", text)
-    text = re.sub(r"\.+(\w+)", ". \g<1>", text)
+    text = re.sub(r"\.+(\w+)", r". \g<1>", text)
     text = re.sub(r"\s+", " ", text)
     return text

@@ -93,9 +93,9 @@ class TextComplexityComputer:
                 - ctu_tu: Complex T-Unit per T-Unit
                 - dc_c: Dependent clause per Clause
                 - c_s: Clauses per Sentences
-                - c_tu: Clauses per T\-Unit
+                - c_tu: Clauses per T-Unit
                 - cp_c: Coordinate phrase per Clause
-                - cp_tu: Coordinate phrase per T\-Unit
+                - cp_tu: Coordinate phrase per T-Unit
                 - pa: Percentage of words not in a reference list (Gougenheim list)
                 - nlm: Number of letter per word
                 - uni_gram_lem: Uni-gram model with Lexique3 on lemmas
@@ -149,7 +149,7 @@ class TextComplexityComputer:
         elif isinstance(metrics, str):
             metrics = [metrics]
         elif metrics is None:
-            metrics = list()
+            metrics = []
 
         sp_object = self.tagger(text)
         metrics_scores = pd.DataFrame(np.zeros((1, len(all_metrics))), columns=all_metrics)
@@ -169,9 +169,8 @@ class TextComplexityComputer:
                 self.scaler.transform(metrics_scores[sorted(metrics_scores.columns)]),
                 columns=sorted(metrics_scores.columns),
             )
-            return scaled_metrics_scores[sorted(metrics)]
-        else:
-            return metrics_scores[sorted(metrics)]
+            metrics_scores = scaled_metrics_scores
+        return metrics_scores[sorted(metrics)]
 
     def get_sp_object(self, text: str) -> Doc:
         """
