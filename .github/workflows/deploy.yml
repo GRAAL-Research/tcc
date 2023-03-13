@@ -9,7 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      DEEPPARSE_RELEASE_BUILD: "1"
+      TCC_RELEASE_BUILD: "1"
 
     steps:
       - uses: actions/checkout@v3
