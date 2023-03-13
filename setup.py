@@ -44,7 +44,7 @@ def main():
 
     packages = find_packages()
     setup(
-        name="tcc",
+        name="text_complexity_computer",
         version=version,
         author="le-smog",
         author_email="le-smog@gmx.com",
