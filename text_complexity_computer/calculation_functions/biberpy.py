@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Code taken from the Python version for doug Biber's MDA
+# Code adaptated and taken from the Python version for doug Biber's MDA
 # https://github.com/ssharoff/biberpy
 # Copyright (C) 2017-2021  Serge Sharoff
 # This program is free software under GPL 3, see http://www.gnu.org/licenses/
@@ -12,10 +12,6 @@ Note: The whole script was obtained via https://github.com/ssharoff/biberpy and 
 It has been adapted by le-smog for use in the TextComplexityComputer framework.
 All these modifications are preceded by a comment tagged with #*.
 """
-import os
-import sys
-
-import ahocorasick  # to apply MWEs to a string
 
 dimnames = {
     "A01": "pastVerbs",
@@ -63,95 +59,23 @@ dimnames = {
     "P67": "analNegn",
 }
 
-mwelist = {}
-
-doc = []
-docstring = ""
-
-# structure of the frequency list
-frq0 = 0
-lemma1 = 1
-pos2 = 2
-finepos3 = 3
-
-# == Value added by le-smog to be entirely integrated to TextCompexityComputer
-ut_verbosity = 1
+language = None
+tag_list = None
+word_lists = None
+mwe_list = None
 
 
-# ==
-
-
-def readwordlists(f):
-    """
-    reads lists in the format
-    firstPersonPronouns = I,we,me,us,my,our,myself,ourselves
-    """
-    out = {}
-    for i, line in enumerate(f):
-        x = line.strip().split(" = ")
-        if len(x) == 2:
-            values = x[1].split(",")
-            out[x[0]] = set([w.strip() for w in values])
-            A = ahocorasick.Automaton()  # separately add an automaton structure for finding MWEs
-            mwecur = []
-            for mwe in values:
-                mwe = mwe.strip()
-                if mwe.find(" ") > 0:
-                    mwecur.append(mwe.lower())
-            if len(mwecur) > 0:
-                for idx, key in enumerate(set(mwecur)):
-                    A.add_word(key, (idx, key))
-                A.make_automaton()
-                mwelist[x[0]] = A
-        else:
-            if ut_verbosity > 0 and len(line) > 1:
-                print("Error in line %i, %s" % (i, line), file=sys.stderr)
-    if ut_verbosity > 1:
-        print("Read total %d classes" % len(out), file=sys.stderr)
-        print(sorted(out.keys()), file=sys.stderr)
-    out["specialVerbs"] = set.union(out["publicVerbs"], out["privateVerbs"], out["suasiveVerbs"])
-    out["modalVerbs"] = set.union(out["possibilityModals"], out["necessityModals"], out["predictionModals"])
-    return out
-
-
-def readnumlist(f):
-    """
-    reads a numfile in the format
-    1625260 years year NOUN Number=Plur
-    This produces a "most frequent tag" substitute for tagging
-    """
-    out = {}
-    for line in f:
-        x = line.rstrip().split()
-        if len(x) == 5 and not x[1] in out:
-            out[x[1].lower()] = (x[0], x[2], x[3], x[4])
-    return out
-
-
-# == Value added by le-smog to be entirely integrated to TextCompexityComputer
-language = "fr"
-dirname = os.path.dirname(os.path.realpath(__file__))
-wordlists = readwordlists(open(dirname + "/biberpy_lists/" + language + ".properties", encoding="utf8"))
-taglist = readnumlist(open(dirname + "/biberpy_lists/" + language + ".tag.num", encoding="utf8"))
-
-
-# ==
-
-
-# json record is a list: [wform,lemma,POS,fine-grained]
-
-
-def wordAt(w):
+def word_at(w):
     if isinstance(w, str):
         return w
     elif isinstance(w, list):
         return w[0].lower()
 
 
-def lemmaAt(w):
+def lemma_at(w):
     if isinstance(w, str):
         try:
-            out = taglist[w][lemma1]
+            out = tag_list[w][1]
         except:
             out = w
     elif isinstance(w, list):
@@ -159,10 +83,10 @@ def lemmaAt(w):
     return out
 
 
-def posAt(w):
+def pos_at(w):
     if isinstance(w, str):
         try:
-            out = taglist[w][pos2]
+            out = tag_list[w][2]
         except:
             out = "PROPN"
     elif isinstance(w, list):
@@ -170,10 +94,10 @@ def posAt(w):
     return out
 
 
-def fineposAt(w):
+def fine_position_at(w):
     if isinstance(w, str):
         try:
-            out = taglist[w][finepos3]
+            out = tag_list[w][3]
         except:
             out = "_"
     elif isinstance(w, list):
@@ -181,29 +105,32 @@ def fineposAt(w):
     return out
 
 
-def isWordSet(w, type):
-    return w in wordlists[type]
+def is_word_set(w, word_type):
+    return w in word_lists[word_type]
 
 
-def findLemmaInSentence(doc, pos, ftclass, getloc=False):  # the last parameter is for providing locations
+def find_lemma_in_sentence(doc, pos, ftclass, get_location=False):
+    """
+    The last parameter is for providing locations
+    """
     count = 0
     out = []
     for i, w in enumerate(doc):
-        if (pos == "" or posAt(w) == pos) and lemmaAt(w) in wordlists[ftclass]:
+        if (pos == "" or pos_at(w) == pos) and lemma_at(w) in word_lists[ftclass]:
             # found in single words
             count += 1
-            if getloc:
+            if get_location:
                 out.append(i)
-    if ftclass in mwelist:
-        A = mwelist[ftclass]
-        for end_index, (insert_order, original_value) in A.iter(docstring):
+    if ftclass in mwe_list:
+        A = mwe_list[ftclass]
+        for end_index, (_, _) in A.iter(str(doc)):
             count += 1
 
     return count, out
 
 
-def posWithLemmaFilter(doc, pos, ftclass):
-    count, _ = findLemmaInSentence(doc, pos, ftclass)
+def pos_with_lemma_filter(doc, pos, ftclass):
+    count, _ = find_lemma_in_sentence(doc, pos, ftclass)
     return count
 
 
@@ -211,8 +138,8 @@ def simplePartsOfSpeech(doc, pos, finepos="", getloc=False):
     count = 0
     out = []
     for i, w in enumerate(doc):
-        mainposTrue = not pos or posAt(w) == pos
-        fineposTrue = not finepos or (fineposAt(w).find(finepos) >= 0)
+        mainposTrue = not pos or pos_at(w) == pos
+        fineposTrue = not finepos or (fine_position_at(w).find(finepos) >= 0)
         if mainposTrue and fineposTrue:
             count += 1
             if getloc:
@@ -222,14 +149,14 @@ def simplePartsOfSpeech(doc, pos, finepos="", getloc=False):
 
 def isDemonstrativePronoun(doc, l):
     try:
-        nextPos = posAt(doc[l + 1])
-        nextWord = wordAt(doc[l + 1])
+        nextPos = pos_at(doc[l + 1])
+        nextWord = word_at(doc[l + 1])
     except:
         nextPos = nextWord = ""
     if (
-        isWordSet(nextWord, "modalVerbs")
+        is_word_set(nextWord, "modalVerbs")
         or nextPos == "PRON"
-        or isWordSet(nextWord, "clausePunctuation")
+        or is_word_set(nextWord, "clausePunctuation")
         or nextWord == "and"
     ):
         return False
@@ -238,20 +165,20 @@ def isDemonstrativePronoun(doc, l):
 
 
 def thatDeletion(doc):
-    count, positions = findLemmaInSentence(doc, "VERB", "specialVerbs", True)
+    count, positions = find_lemma_in_sentence(doc=doc, pos="VERB", ftclass="specialVerbs", get_location=True)
     thatcount = 0
     for l in positions:
         try:
-            nextWord = wordAt(doc[l + 1])
+            nextWord = word_at(doc[l + 1])
             # First Biber prescription
-            if isDemonstrativePronoun(doc, l + 1) or isWordSet(nextWord, "subjectPronouns"):
+            if isDemonstrativePronoun(doc, l + 1) or is_word_set(nextWord, "subjectPronouns"):
                 thatcount += 1
             else:
-                nextPos = posAt(doc[l + 1])
-                posAfter = posAt(doc[l + 2])
+                nextPos = pos_at(doc[l + 1])
+                posAfter = pos_at(doc[l + 2])
                 lCounter = 2
                 # Second Biber prescription
-                if nextPos == "PRON" or nextPos == "NOUN" and isWordSet(wordAt(doc[l + lCounter]), "modalVerbs"):
+                if nextPos == "PRON" or nextPos == "NOUN" and is_word_set(word_at(doc[l + lCounter]), "modalVerbs"):
                     thatcount += 1
                 else:
                     # Third and most complicated Biber prescription
@@ -259,12 +186,12 @@ def thatDeletion(doc):
                         # This is the optional adjective
                         if posAfter == "ADJ":
                             lCounter += 1
-                            posAfter = posAt(doc[l + lCounter])
+                            posAfter = pos_at(doc[l + lCounter])
                         # Then a noun
                         if posAfter == "NOUN":
                             lCounter += 1
                             # Then if there's an auxiliary we accept this one
-                            if isWordSet(wordAt(doc[l + lCounter]), "modalVerbs"):
+                            if is_word_set(word_at(doc[l + lCounter]), "modalVerbs"):
                                 thatcount += 1
         except:
             # the index is out of the doc length
@@ -279,13 +206,13 @@ def thatDeletion(doc):
 def contractions(doc):
     count = 0
     for w in doc:
-        if wordAt(w).find("'") >= 0:
+        if word_at(w).find("'") >= 0:
             count += 1
     return count
 
 
 def demonstrativePronouns(doc):
-    count, positions = findLemmaInSentence(doc, "", "demonstrativePronouns", True)
+    count, positions = find_lemma_in_sentence(doc=doc, pos="", ftclass="demonstrativePronouns", get_location=True)
     for l in positions:
         if not isDemonstrativePronoun(doc, l):
             count += -1
@@ -295,7 +222,7 @@ def demonstrativePronouns(doc):
 def doAsProVerb(doc):
     # As usual we operate using BFI. First check if there are any DOs in the
     # sentence.
-    doCount, doPositions = findLemmaInSentence(doc, "", "doVerb", True)
+    doCount, doPositions = find_lemma_in_sentence(doc=doc, pos="", ftclass="doVerb", get_location=True)
 
     for doPosition in doPositions:
         try:
@@ -303,8 +230,8 @@ def doAsProVerb(doc):
             # or directly by a verb then it is NOT one we count
             # Also this condition should take into account the sentence
             # boundaries
-            if posAt(doc[doPosition + 1]) == "VERB" or (
-                posAt(doc[doPosition + 1]) in ["ADV", "PART"] and posAt(doc[doPosition + 2]) == "VERB"
+            if pos_at(doc[doPosition + 1]) == "VERB" or (
+                pos_at(doc[doPosition + 1]) in ["ADV", "PART"] and pos_at(doc[doPosition + 2]) == "VERB"
             ):
                 doCount += -1
             else:
@@ -313,8 +240,8 @@ def doAsProVerb(doc):
                 # only includes who, whose and which. I think it should be
                 # those four PLUS the whQuestions. Need to put in the prior
                 # punctuation
-                previousWord = wordAt(doc[doPosition - 1])
-                if isWordSet(previousWord, "whQuestions") or isWordSet(previousWord, "whMarkers"):
+                previousWord = word_at(doc[doPosition - 1])
+                if is_word_set(previousWord, "whQuestions") or is_word_set(previousWord, "whMarkers"):
                     doCount += -1
         except:
             doCount += -1
@@ -324,7 +251,7 @@ def doAsProVerb(doc):
 def beAsMainVerb(doc):
     # As usual we operate using BFI. First check if there are any BEs in the
     # sentence.
-    beCount, bePositions = findLemmaInSentence(doc, "", "beVerb", True)
+    beCount, bePositions = find_lemma_in_sentence(doc=doc, pos="", ftclass="beVerb", get_location=True)
     for loc in bePositions:
         # Biber's prescription for this is just that the BE is
         # followed by determiner, possessive pronoun, preposition,
@@ -332,7 +259,7 @@ def beAsMainVerb(doc):
         # We also discount case where the BE is at the end of the sentence
         # (the SENT is at $end so the last word is at $end - 1).
         try:
-            pos = posAt(doc[loc + 1])
+            pos = pos_at(doc[loc + 1])
             if not pos in ["DET", "ADJ", "PRON", "ADP"]:
                 beCount += -1
         except:
@@ -344,8 +271,8 @@ def strandedPrepositions(doc):
     prepCount, prepPositions = simplePartsOfSpeech(doc, "ADP", "", True)
     for loc in prepPositions:
         try:
-            nextWord = wordAt(doc[loc + 1])
-            if not isWordSet(nextWord, "clausePunctuation"):
+            nextWord = word_at(doc[loc + 1])
+            if not is_word_set(nextWord, "clausePunctuation"):
                 prepCount += -1
         except:
             prepCount += -1
@@ -356,7 +283,7 @@ def nominalizations(doc):
     nounCount, nounPositions = simplePartsOfSpeech(doc, "NOUN", "", True)
     nomCount = 0
     for loc in nounPositions:
-        lemma = lemmaAt(doc[loc])
+        lemma = lemma_at(doc[loc])
         if (
             (language == "en" and lemma[-3:] in ["ion", "ent", "ess", "ism"])
             or (language == "es" and lemma[-3:] in ["ión", "nto", "leo", "cia", "dad"])
@@ -368,14 +295,14 @@ def nominalizations(doc):
 
 
 def conjuncts(doc):
-    singleWords = posWithLemmaFilter(doc, "", "conjunctsSingle")
+    singleWords = pos_with_lemma_filter(doc, "", "conjunctsSingle")
     MWEs = 0  # 'conjunctsMWE'
     pCount = 0
     # punctuation+else, punctuation+altogether, punctuation+rather
-    pCount, pPositions = findLemmaInSentence(doc, "", "beVerb", True)
+    pCount, pPositions = find_lemma_in_sentence(doc=doc, pos="", ftclass="beVerb", get_location=True)
     for loc in pPositions:
         try:
-            prevPos = posAt(doc[loc - 1])
+            prevPos = pos_at(doc[loc - 1])
             if not prevPos == "PUNCT":
                 pCount += 1
         except:
@@ -389,7 +316,7 @@ def BYpassives(doc):  # very simple at the moment, only the next word counts
     passCount = 0
     for loc in vPositions:
         try:
-            nextWord = lemmaAt(doc[loc + 1])
+            nextWord = lemma_at(doc[loc + 1])
             if (
                 (language == "en" and nextWord == "by")
                 or (language == "es" and nextWord == "por")
@@ -399,7 +326,7 @@ def BYpassives(doc):  # very simple at the moment, only the next word counts
             elif language == "ru":  # the instrumental case in a window of 2 words
                 found = False
                 for locIns in range(loc - 2, loc + 2):
-                    finepos = fineposAt(doc[locIns])
+                    finepos = fine_position_at(doc[locIns])
                     if finepos.find("Case=Ins") >= 0:
                         found = True
                         break
@@ -411,30 +338,30 @@ def BYpassives(doc):  # very simple at the moment, only the next word counts
 
 
 def syntheticNegation(doc):
-    noCount, noPositions = findLemmaInSentence(doc, "", "notWord", True)
+    noCount, noPositions = find_lemma_in_sentence(doc=doc, pos="", ftclass="notWord", get_location=True)
     for l in noPositions:
         try:
-            pos = posAt(doc[l + 1])
-            nextWord = wordAt(doc[l + 1])
-            if not (pos in ["ADJ", "NOUN"] and isWordSet(nextWord, "quantifiers")):
+            pos = pos_at(doc[l + 1])
+            nextWord = word_at(doc[l + 1])
+            if not (pos in ["ADJ", "NOUN"] and is_word_set(nextWord, "quantifiers")):
                 noCount += -1
         except:
             noCount += -1
-    nNCount, _ = findLemmaInSentence(doc, "", "neitherWord")
+    nNCount, _ = find_lemma_in_sentence(doc=doc, pos="", ftclass="neitherWord", get_location=False)
     noCount += nNCount
     return noCount
 
 
 def osubordinators(doc):
-    dCount, _ = findLemmaInSentence(doc, "", "osubordinators")
+    dCount, _ = find_lemma_in_sentence(doc=doc, pos="", ftclass="osubordinators", get_location=False)
     return dCount
 
 
 def discourseParticles(doc):
-    dCount, dPositions = findLemmaInSentence(doc, "", "discourseParticles", True)
+    dCount, dPositions = find_lemma_in_sentence(doc=doc, pos="", ftclass="discourseParticles", get_location=True)
     for l in dPositions:
         try:
-            prevPos = posAt(doc[l - 1])
+            prevPos = pos_at(doc[l - 1])
             if not prevPos == "PUNCT":
                 dCount += -1
         except:  # do nothing, we're at the begging of a document
@@ -447,8 +374,8 @@ def presentParticipialClauses(doc):
     ppCount, ppPositions = simplePartsOfSpeech(doc, "VERB", ppQuery, True)
     for l in ppPositions:
         try:
-            w0 = wordAt(doc[l - 1])
-            if isWordSet(w0, "clausePunctuation"):
+            w0 = word_at(doc[l - 1])
+            if is_word_set(w0, "clausePunctuation"):
                 ppCount += -1
         except:
             ppCount += -1
@@ -459,9 +386,9 @@ def predicativeAdjectives(doc):
     adjCount, adjPositions = simplePartsOfSpeech(doc, "ADJ", "", True)
     for l in adjPositions:
         try:
-            previousLemma = lemmaAt(doc[l - 1])
-            nextPos = posAt(doc[l + 1])
-            if not (isWordSet(previousLemma, "beVerb") and nextPos in ["ADJ", "NOUN"]):
+            previousLemma = lemma_at(doc[l - 1])
+            nextPos = pos_at(doc[l + 1])
+            if not (is_word_set(previousLemma, "beVerb") and nextPos in ["ADJ", "NOUN"]):
                 adjCount += -1
         except:
             adjCount += -1
@@ -469,10 +396,10 @@ def predicativeAdjectives(doc):
 
 
 def piedPiping(doc):
-    whCount, whPositions = findLemmaInSentence(doc, "", "piedPiping", True)
+    whCount, whPositions = find_lemma_in_sentence(doc=doc, pos="", ftclass="piedPiping", get_location=True)
     for l in whPositions:
         try:
-            prevPos = posAt(doc[l - 1])
+            prevPos = pos_at(doc[l - 1])
             if not prevPos == "ADP":
                 whCount += -1
         except:
@@ -484,8 +411,8 @@ def wordLength(doc):
     totLength = 0
     wordCount = 0
     for w in doc:
-        word = wordAt(w)
-        if not isWordSet(word, "clausePunctuation"):
+        word = word_at(w)
+        if not is_word_set(word, "clausePunctuation"):
             totLength += len(word)
             wordCount += 1
     return totLength / (wordCount + 0.000001)
@@ -498,10 +425,10 @@ def typeTokenRatio(doc):
     seenBefore = {}
     tokenCounter = 0
     for w in doc[:biberLength]:
-        if not isWordSet(wordAt(w), "clausePunctuation"):
+        if not is_word_set(word_at(w), "clausePunctuation"):
             tokenCounter += 1
-            if not lemmaAt(w) in seenBefore:
-                seenBefore[lemmaAt(w)] = 1
+            if not lemma_at(w) in seenBefore:
+                seenBefore[lemma_at(w)] = 1
     return len(seenBefore) / (tokenCounter + 0.000001)
 
 
@@ -519,18 +446,18 @@ def getbiberdims(doc):
     dimlist[dimnames["A01"]] = simplePartsOfSpeech(doc, "VERB", "Tense=Past")[0] / normalise
     dimlist[dimnames["A03"]] = simplePartsOfSpeech(doc, "VERB", "Tense=Pres")[0] / normalise
 
-    dimlist[dimnames["B04"]] = posWithLemmaFilter(doc, "", "placeAdverbials") / normalise
-    dimlist[dimnames["B05"]] = posWithLemmaFilter(doc, "", "timeAdverbials") / normalise
+    dimlist[dimnames["B04"]] = pos_with_lemma_filter(doc, "", "placeAdverbials") / normalise
+    dimlist[dimnames["B05"]] = pos_with_lemma_filter(doc, "", "timeAdverbials") / normalise
 
-    dimlist[dimnames["C06"]] = posWithLemmaFilter(doc, "", "firstPersonPronouns") / normalise
-    dimlist[dimnames["C07"]] = posWithLemmaFilter(doc, "PRON", "secondPersonPronouns") / normalise
-    dimlist[dimnames["C08"]] = posWithLemmaFilter(doc, "", "thirdPersonPronouns") / normalise
-    dimlist[dimnames["C09"]] = posWithLemmaFilter(doc, "", "itWord") / normalise  # impersonal
+    dimlist[dimnames["C06"]] = pos_with_lemma_filter(doc, "", "firstPersonPronouns") / normalise
+    dimlist[dimnames["C07"]] = pos_with_lemma_filter(doc, "PRON", "secondPersonPronouns") / normalise
+    dimlist[dimnames["C08"]] = pos_with_lemma_filter(doc, "", "thirdPersonPronouns") / normalise
+    dimlist[dimnames["C09"]] = pos_with_lemma_filter(doc, "", "itWord") / normalise  # impersonal
     dimlist[dimnames["C10"]] = demonstrativePronouns(doc) / normalise
-    dimlist[dimnames["C11"]] = posWithLemmaFilter(doc, "", "indefinitePronouns") / normalise
+    dimlist[dimnames["C11"]] = pos_with_lemma_filter(doc, "", "indefinitePronouns") / normalise
     dimlist[dimnames["C12"]] = doAsProVerb(doc) / normalise
 
-    dimlist[dimnames["D13"]] = posWithLemmaFilter(doc, "", "whQuestions") / normalise
+    dimlist[dimnames["D13"]] = pos_with_lemma_filter(doc, "", "whQuestions") / normalise
     dimlist[dimnames["E14"]] = nominalizations(doc) / normalise
     dimlist[dimnames["E16"]] = (simplePartsOfSpeech(doc, "NOUN")[0] / normalise) - dimlist[
         dimnames["E14"]
@@ -539,15 +466,15 @@ def getbiberdims(doc):
     # * dimlist['F18'] =  BYpassives(doc)/normalise # to debug
 
     dimlist[dimnames["G19"]] = beAsMainVerb(doc) / normalise
-    dimlist[dimnames["H23"]] = posWithLemmaFilter(doc, "", "whMarkers") / normalise
+    dimlist[dimnames["H23"]] = pos_with_lemma_filter(doc, "", "whMarkers") / normalise
     # * dimlist['H25'] = presentParticipialClauses(doc)/normalise
     dimlist[dimnames["H33"]] = piedPiping(doc) / normalise  # the manner in which he was told
     dimlist[dimnames["H34"]] = (
-        posWithLemmaFilter(doc, "", "sentenceRelatives") / normalise
+        pos_with_lemma_filter(doc, "", "sentenceRelatives") / normalise
     )  # Bob likes fried mangoes, which is the most disgusting
-    dimlist[dimnames["H35"]] = posWithLemmaFilter(doc, "", "becauseWord") / normalise
+    dimlist[dimnames["H35"]] = pos_with_lemma_filter(doc, "", "becauseWord") / normalise
     # * dimlist['H36'] = posWithLemmaFilter(doc,'','concessives')/normalise
-    dimlist[dimnames["H37"]] = posWithLemmaFilter(doc, "", "conditionalSubordination") / normalise
+    dimlist[dimnames["H37"]] = pos_with_lemma_filter(doc, "", "conditionalSubordination") / normalise
     dimlist[dimnames["H38"]] = osubordinators(doc) / normalise
 
     dimlist[dimnames["I39"]] = simplePartsOfSpeech(doc, "ADP")[0] / normalise
@@ -559,20 +486,20 @@ def getbiberdims(doc):
     dimlist[dimnames["J44"]] = wordLength(doc)
 
     dimlist[dimnames["K45"]] = conjuncts(doc) / normalise
-    dimlist[dimnames["K46"]] = posWithLemmaFilter(doc, "", "downtopers") / normalise
+    dimlist[dimnames["K46"]] = pos_with_lemma_filter(doc, "", "downtopers") / normalise
     # * dimlist['K47'] = posWithLemmaFilter(doc,'','generalHedges')/normalise
-    dimlist[dimnames["K48"]] = posWithLemmaFilter(doc, "", "amplifiers") / normalise
-    dimlist[dimnames["K49"]] = posWithLemmaFilter(doc, "", "generalEmphatics") / normalise
+    dimlist[dimnames["K48"]] = pos_with_lemma_filter(doc, "", "amplifiers") / normalise
+    dimlist[dimnames["K49"]] = pos_with_lemma_filter(doc, "", "generalEmphatics") / normalise
     dimlist[dimnames["K50"]] = discourseParticles(doc) / normalise
 
-    dimlist[dimnames["L52"]] = posWithLemmaFilter(doc, "", "possibilityModals") / normalise
-    dimlist[dimnames["L53"]] = posWithLemmaFilter(doc, "", "necessityModals") / normalise
-    dimlist[dimnames["L54"]] = posWithLemmaFilter(doc, "", "predictionModals") / normalise
+    dimlist[dimnames["L52"]] = pos_with_lemma_filter(doc, "", "possibilityModals") / normalise
+    dimlist[dimnames["L53"]] = pos_with_lemma_filter(doc, "", "necessityModals") / normalise
+    dimlist[dimnames["L54"]] = pos_with_lemma_filter(doc, "", "predictionModals") / normalise
 
-    dimlist[dimnames["K55"]] = posWithLemmaFilter(doc, "VERB", "publicVerbs") / normalise
-    dimlist[dimnames["K56"]] = posWithLemmaFilter(doc, "VERB", "privateVerbs") / normalise
-    dimlist[dimnames["K57"]] = posWithLemmaFilter(doc, "", "suasiveVerbs") / normalise
-    dimlist[dimnames["K58"]] = posWithLemmaFilter(doc, "", "seemappear") / normalise
+    dimlist[dimnames["K55"]] = pos_with_lemma_filter(doc, "VERB", "publicVerbs") / normalise
+    dimlist[dimnames["K56"]] = pos_with_lemma_filter(doc, "VERB", "privateVerbs") / normalise
+    dimlist[dimnames["K57"]] = pos_with_lemma_filter(doc, "", "suasiveVerbs") / normalise
+    dimlist[dimnames["K58"]] = pos_with_lemma_filter(doc, "", "seemappear") / normalise
 
     dimlist[dimnames["N59"]] = contractions(doc) / normalise
     dimlist[dimnames["N60"]] = thatDeletion(doc) / normalise
@@ -580,6 +507,6 @@ def getbiberdims(doc):
     dimlist[dimnames["N61"]] = strandedPrepositions(doc) / normalise
 
     dimlist[dimnames["P66"]] = syntheticNegation(doc) / normalise
-    dimlist[dimnames["P67"]] = posWithLemmaFilter(doc, "", "notWord") / normalise
+    dimlist[dimnames["P67"]] = pos_with_lemma_filter(doc, "", "notWord") / normalise
 
     return dimlist

@@ -16,7 +16,7 @@ from .calculation_functions import (
     syntactic_complexity,
     lexical_diversity,
 )
-from .tools import clean_text
+from .tools import clean_text, read_word_lists, read_num_list
 
 
 class TextComplexityComputer:
@@ -33,7 +33,7 @@ class TextComplexityComputer:
         compute(text: str): Compute the text and evaluate the global difficulty level
     """
 
-    def __init__(self, language: str = "fr", scaler: Union[str, None] = "MinMaxScaler"):
+    def __init__(self, language: str = "fr", scaler: Union[str, None] = "MinMaxScaler", verbosity: int = 1):
         """
         Constructor of TextComplexityComputer
 
@@ -41,6 +41,8 @@ class TextComplexityComputer:
             language (str): The language to use, either `'fr'` or `'en'`. By default, `'fr'`.
             scaler (Union[str, None]): chose the scaler between StandardScaler (by default), MinMaxScaler and none.
         """
+        root_path = os.path.abspath(os.path.dirname(__file__))
+
         self.language = language
         if self.language == "fr":
             try:
@@ -48,22 +50,36 @@ class TextComplexityComputer:
             except OSError:
                 print(download('fr_core_news_sm'))
                 self.tagger = spacy.load("fr_core_news_sm")
-            scaler_path = f"fr_{scaler}.pickle"
-            model_path = "fr_model.pickle"
         elif self.language == "en":
             try:
                 self.tagger = spacy.load("fr_core_news_sm")
             except OSError:
                 print(download('en_core_news_md'))
                 self.tagger = spacy.load("en_core_news_md")
-            scaler_path = f"en_{scaler}.pickle"
-            model_path = "en_model.pickle"
         else:
             raise ValueError(f"language can be 'fr' or 'en', not {self.language}")
 
+        scaler_path = f"{self.language}_{scaler}.pickle"
+        model_path = f"{self.language}_model.pickle"
+
+        self.word_lists, self.mwe_list = read_word_lists(
+            open(os.path.join(root_path, "resources", self.language, f"{self.language}.properties"), encoding="utf8"),
+            verbosity=verbosity,
+        )
+        self.tag_list = read_num_list(
+            open(os.path.join(root_path, "resources", self.language + f"{self.language}.tag.num"), encoding="utf8")
+        )
+
+        biberpy.language = self.language
+
+        biberpy.word_lists = self.word_lists
+        biberpy.mwe_list = self.mwe_list
+
+        biberpy.tag_list = self.tag_list
+
         self.tagger.max_length = 5000000
 
-        path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "model_dependencies")
+        path = os.path.join(root_path, "model_dependencies")
         # Get scaler
         if scaler:
             with open(os.path.join(path, scaler_path), "rb") as rb:

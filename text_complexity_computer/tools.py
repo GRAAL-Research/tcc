@@ -1,4 +1,8 @@
 import re
+import sys
+from typing import Dict, Tuple
+
+import ahocorasick
 
 
 def clean_text(text: str) -> str:
@@ -27,3 +31,55 @@ def clean_text(text: str) -> str:
     text = re.sub(r"\.+(\w+)", r". \g<1>", text)
     text = re.sub(r"\s+", " ", text)
     return text
+
+
+def read_word_lists(f, verbosity: int) -> Tuple[Dict, Dict]:
+    """
+    reads lists in the format
+    firstPersonPronouns = I,we,me,us,my,our,myself,ourselves
+    """
+    word_lists = {}
+    mwe_list = {}
+    for i, line in enumerate(f):
+        x = line.strip().split(" = ")
+        if len(x) == 2:
+            values = x[1].split(",")
+            word_lists[x[0]] = set([w.strip() for w in values])
+            A = ahocorasick.Automaton()  # separately add an automaton structure for finding MWEs
+            mwecur = []
+            for mwe in values:
+                mwe = mwe.strip()
+                if mwe.find(" ") > 0:
+                    mwecur.append(mwe.lower())
+            if len(mwecur) > 0:
+                for idx, key in enumerate(set(mwecur)):
+                    A.add_word(key, (idx, key))
+                A.make_automaton()
+                mwe_list[x[0]] = A
+        else:
+            if verbosity > 0 and len(line) > 1:
+                print("Error in line %i, %s" % (i, line), file=sys.stderr)
+    if verbosity > 1:
+        print("Read total %d classes" % len(word_lists), file=sys.stderr)
+        print(sorted(word_lists.keys()), file=sys.stderr)
+    word_lists["specialVerbs"] = set.union(
+        word_lists["publicVerbs"], word_lists["privateVerbs"], word_lists["suasiveVerbs"]
+    )
+    word_lists["modalVerbs"] = set.union(
+        word_lists["possibilityModals"], word_lists["necessityModals"], word_lists["predictionModals"]
+    )
+    return word_lists, mwe_list
+
+
+def read_num_list(f) -> Dict:
+    """
+    reads a numfile in the format
+    1625260 years year NOUN Number=Plur
+    This produces a "most frequent tag" substitute for tagging
+    """
+    tag_list = {}
+    for line in f:
+        x = line.rstrip().split()
+        if len(x) == 5 and not x[1] in tag_list:
+            tag_list[x[1].lower()] = (x[0], x[2], x[3], x[4])
+    return tag_list
