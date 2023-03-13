@@ -1,14 +1,8 @@
 ## dev
 
-## Beta (0.1.2)
+## Beta (0.1.3)
 
-- Fixed missing data package
-
-
-## Beta (0.1.1)
-
+- Add missing en model
 - Fixed Biperby
-
-## Beta (0.1)
-
+- Fixed missing data package
 - Initial release of the library
