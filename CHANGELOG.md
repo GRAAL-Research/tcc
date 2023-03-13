@@ -1,8 +1,9 @@
 ## dev
 
-## Beta (0.1.3)
+## Beta (0.1.4)
 
-- Add missing en model
-- Fixed Biperby
-- Fixed missing data package
 - Initial release of the library
+- Fixed missing data package
+- Fixed Biperby
+- Add missing en model
+- Fix error in SpaCy model

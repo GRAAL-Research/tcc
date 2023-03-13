@@ -43,18 +43,20 @@ class TextComplexityComputer:
         """
         self.language = language
         if self.language == "fr":
+            model_name = "fr_core_news_sm"
             try:
-                self.tagger = spacy.load("fr_core_news_sm")
+                self.tagger = spacy.load(model_name)
             except OSError:
-                print(download('fr_core_news_sm'))
-                self.tagger = spacy.load("fr_core_news_sm")
+                print(download(model_name))
+                self.tagger = spacy.load(model_name)
 
         elif self.language == "en":
+            model_name = "en_core_news_md"
             try:
-                self.tagger = spacy.load("fr_core_news_sm")
+                self.tagger = spacy.load(model_name)
             except OSError:
-                print(download('en_core_news_md'))
-                self.tagger = spacy.load("en_core_news_md")
+                print(download(model_name))
+                self.tagger = spacy.load(model_name)
         else:
             raise ValueError(f"language can be 'fr' or 'en', not {self.language}")
 
