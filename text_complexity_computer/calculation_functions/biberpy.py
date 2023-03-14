@@ -1,3 +1,5 @@
+# pylint: disable=bare-except, too-many-boolean-expressions, too-many-nested-blocks
+
 # -*- coding: utf-8 -*-
 # Code adaptated and taken from the Python version for doug Biber's MDA
 # https://github.com/ssharoff/biberpy
@@ -68,8 +70,8 @@ mwe_list = None
 def word_at(w):
     if isinstance(w, str):
         return w
-    elif isinstance(w, list):
-        return w[0].lower()
+    # List case
+    return w[0].lower()
 
 
 def lemma_at(w):
@@ -123,7 +125,7 @@ def find_lemma_in_sentence(doc, pos, ftclass, get_location=False):
                 out.append(i)
     if ftclass in mwe_list:
         A = mwe_list[ftclass]
-        for end_index, (_, _) in A.iter(str(doc)):
+        for _ in A.iter(str(doc)):
             count += 1
 
     return count, out
@@ -160,8 +162,7 @@ def isDemonstrativePronoun(doc, l):
         or nextWord == "and"
     ):
         return False
-    else:
-        return True
+    return True
 
 
 def thatDeletion(doc):
@@ -260,7 +261,7 @@ def beAsMainVerb(doc):
         # (the SENT is at $end so the last word is at $end - 1).
         try:
             pos = pos_at(doc[loc + 1])
-            if not pos in ["DET", "ADJ", "PRON", "ADP"]:
+            if pos not in ["DET", "ADJ", "PRON", "ADP"]:
                 beCount += -1
         except:
             beCount += -1
@@ -280,7 +281,7 @@ def strandedPrepositions(doc):
 
 
 def nominalizations(doc):
-    nounCount, nounPositions = simplePartsOfSpeech(doc, "NOUN", "", True)
+    _, nounPositions = simplePartsOfSpeech(doc, "NOUN", "", True)
     nomCount = 0
     for loc in nounPositions:
         lemma = lemma_at(doc[loc])
@@ -303,7 +304,7 @@ def conjuncts(doc):
     for loc in pPositions:
         try:
             prevPos = pos_at(doc[loc - 1])
-            if not prevPos == "PUNCT":
+            if prevPos != "PUNCT":
                 pCount += 1
         except:
             pCount += 1
@@ -312,7 +313,7 @@ def conjuncts(doc):
 
 
 def BYpassives(doc):  # very simple at the moment, only the next word counts
-    vCount, vPositions = simplePartsOfSpeech(doc, "", "Voice=Pass", True)
+    _, vPositions = simplePartsOfSpeech(doc, "", "Voice=Pass", True)
     passCount = 0
     for loc in vPositions:
         try:
@@ -362,7 +363,7 @@ def discourseParticles(doc):
     for l in dPositions:
         try:
             prevPos = pos_at(doc[l - 1])
-            if not prevPos == "PUNCT":
+            if prevPos != "PUNCT":
                 dCount += -1
         except:  # do nothing, we're at the begging of a document
             dCount += 0
@@ -400,7 +401,7 @@ def piedPiping(doc):
     for l in whPositions:
         try:
             prevPos = pos_at(doc[l - 1])
-            if not prevPos == "ADP":
+            if prevPos != "ADP":
                 whCount += -1
         except:
             whCount += -1

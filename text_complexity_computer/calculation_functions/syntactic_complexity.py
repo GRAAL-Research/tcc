@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import numpy as np
 from typing import Union, Tuple
+
+import numpy as np
 from spacy.tokens import Doc, Token
+
 from .metrics_utils import get_num_sentences, get_num_words, safe_divide
 
 
@@ -29,9 +31,10 @@ def nws_90(sp_object: Doc) -> int:
     Returns:
         int: length of the 90th percentile sentence
     """
-    if not len(sp_object):
+    if len(sp_object) == 0:
+        # Empty document
         return 0
-    sentences = [x for x in range(get_num_sentences(sp_object))]
+    sentences = list(range(get_num_sentences(sp_object)))
     if len(sentences) == 0:
         # Fail-case if the SpaCy model could not extract a clear sentence.
         # It happens rarely.

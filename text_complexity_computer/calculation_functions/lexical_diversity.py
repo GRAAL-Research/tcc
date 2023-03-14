@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from spacy.tokens import Doc, Token
 from typing import Union, List
+
+from spacy.tokens import Doc, Token
 
 from .metrics_utils import get_num_words, safe_divide
 
@@ -49,7 +50,7 @@ def mean_sequential_ttr(sp_object: Doc, segment_size: int = 50) -> float:
     Returns:
         float: the MSTTR
     """
-    sttr = list()
+    sttr = []
     filtered_words = get_filtered_words(sp_object, without_stop=True)
     num_words = len(filtered_words)
     for i in range(0, num_words - num_words % segment_size, segment_size):
@@ -70,7 +71,7 @@ def moving_average_ttr(sp_object: Doc, window_size: int = 100) -> float:
         float: the MATTR
 
     """
-    wttr = list()
+    wttr = []
     filtered_words = get_filtered_words(sp_object, without_stop=True)
     num_word = len(filtered_words) - window_size
     for i in range(num_word - num_word % window_size + 1):

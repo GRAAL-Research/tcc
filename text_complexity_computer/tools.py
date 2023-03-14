@@ -1,3 +1,4 @@
+# pylint: disable=c-extension-no-member, consider-using-set-comprehension
 import re
 import sys
 from typing import Dict, Tuple
@@ -59,9 +60,9 @@ def read_word_lists(file_path: str, verbosity: int) -> Tuple[Dict, Dict]:
                     mwe_list[x[0]] = A
             else:
                 if verbosity > 0 and len(line) > 1:
-                    print("Error in line %i, %s" % (i, line), file=sys.stderr)
+                    print(f"Error in line {i}, {line}", file=sys.stderr)
     if verbosity > 1:
-        print("Read total %d classes" % len(word_lists), file=sys.stderr)
+        print(f"Read total {len(word_lists)} classes", file=sys.stderr)
         print(sorted(word_lists.keys()), file=sys.stderr)
     word_lists["specialVerbs"] = set.union(
         word_lists["publicVerbs"], word_lists["privateVerbs"], word_lists["suasiveVerbs"]

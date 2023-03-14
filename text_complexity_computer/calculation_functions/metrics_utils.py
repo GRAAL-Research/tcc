@@ -2,7 +2,6 @@
 import re
 from typing import Union, Tuple, List
 
-import spacy
 from spacy.tokens import Doc, Token
 
 
@@ -86,8 +85,7 @@ def get_num_syllables(sp_object: Union[Doc, Token]) -> int:
     if isinstance(sp_object, Token):
         if not sp_object.is_punct and "'" not in sp_object.text:
             return syllables_estimate(sp_object.text)
-        else:
-            return 0
+        return 0
 
     filtered_words = [word.text for word in sp_object if not word.is_punct and "'" not in word.text]
     return syllables_estimate(" ".join(filtered_words))
@@ -106,5 +104,4 @@ def safe_divide(x: Union[int, float], y: Union[int, float], returned_value: Unio
     """
     if y == 0:
         return returned_value
-    else:
-        return x / y
+    return x / y
