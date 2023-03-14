@@ -7,7 +7,7 @@ from math import log
 
 from spacy.tokens import Doc
 
-from .metrics_utils import _get_num_words, _safe_divide
+from .metrics_utils import get_num_words, safe_divide
 
 
 def pa(sp_object: Doc, language: str) -> float:
@@ -28,7 +28,7 @@ def pa(sp_object: Doc, language: str) -> float:
     for token in sp_object:
         if token.lemma_ not in utf8data:
             count += 1
-    return _safe_divide(count, _get_num_words(sp_object))
+    return safe_divide(count, get_num_words(sp_object))
 
 
 def nlm(sp_object: Doc) -> float:
@@ -40,8 +40,8 @@ def nlm(sp_object: Doc) -> float:
     Returns:
         float: average size of words
     """
-    num_word, num_letter = _get_num_words(sp_object, get_size=True)
-    return _safe_divide(num_letter, num_word)
+    num_word, num_letter = get_num_words(sp_object, get_size=True)
+    return safe_divide(num_letter, num_word)
 
 
 def nmm_8(sp_object) -> float:
@@ -53,7 +53,7 @@ def nmm_8(sp_object) -> float:
     Returns:
         float: Average number of words with more than 8 letters
     """
-    return _safe_divide(_get_num_words(sp_object, min_size=8), _get_num_words(sp_object))
+    return safe_divide(get_num_words(sp_object, min_size=8), get_num_words(sp_object))
 
 
 def uni_gram_lem(sp_object: Doc, language: str) -> float:
@@ -82,4 +82,4 @@ def uni_gram_lem(sp_object: Doc, language: str) -> float:
             else:
                 normalized_prob += log(lexique_dic[token.lemma_])
 
-    return _safe_divide(normalized_prob, _get_num_words(sp_object))
+    return safe_divide(normalized_prob, get_num_words(sp_object))

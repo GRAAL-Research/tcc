@@ -137,10 +137,10 @@ class TextComplexityComputer:
         text = clean_text(text)
 
         metrics_call = {
-            "mls": syntactic_complexity.mls,
+            "mls": syntactic_complexity.mean_length_sentences,
             "ps_30": syntactic_complexity.ps_30,
             "nws_90": syntactic_complexity.nws_90,
-            "mlt": syntactic_complexity.mlt,
+            "mlt": syntactic_complexity.mean_length_tunit,
             "tu_s": syntactic_complexity.tu_s,
             "ctu_tu": syntactic_complexity.ctu_tu,
             "dc_c": syntactic_complexity.dc_c,
@@ -151,9 +151,9 @@ class TextComplexityComputer:
             "pa": partial(vocabulary_complexity.pa, language=self.language),
             "nlm": vocabulary_complexity.nlm,
             "uni_gram_lem": partial(vocabulary_complexity.uni_gram_lem, language=self.language),
-            "msttr": lexical_diversity.msttr,
-            "mattr": lexical_diversity.mtld,
-            "mtld": lexical_diversity.mtld,
+            "msttr": lexical_diversity.mean_sequential_ttr,
+            "mattr": lexical_diversity.measure_textual_lexical_diversity,
+            "mtld": lexical_diversity.measure_textual_lexical_diversity,
             "fk_ease": readability.fk_ease,
             "bingui": readability.bingui,
             "km_score": readability.km_formula,

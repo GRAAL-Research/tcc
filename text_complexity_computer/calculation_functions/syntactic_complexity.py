@@ -3,38 +3,41 @@
 import numpy as np
 from typing import Union, Tuple
 from spacy.tokens import Doc, Token
-from .metrics_utils import _get_num_sentences, _get_num_words, _safe_divide
+from .metrics_utils import get_num_sentences, get_num_words, safe_divide
 
 
-def mls(sp_object: Doc) -> float:
-    """Mean Lenght of Sentences (MLS)
+def mean_length_sentences(sp_object: Doc) -> float:
+    """
+    Mean Length of Sentences (MLS)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
 
     Returns:
-        float: the mean lenght of sentences
+        float: the mean length of sentences
     """
-    return _safe_divide(_get_num_words(sp_object), _get_num_sentences(sp_object))
+    return safe_divide(get_num_words(sp_object), get_num_sentences(sp_object))
 
 
 def nws_90(sp_object: Doc) -> int:
-    """Lenght of the 90th percentile sentence (NWS_90)
+    """
+    Length of the 90th percentile sentence (NWS_90)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
 
     Returns:
-        int: lenght of the 90th percentile sentence
+        int: length of the 90th percentile sentence
     """
     if not len(sp_object):
         return 0
-    rank = int(np.percentile([x for x in range(_get_num_sentences(sp_object))], 90))
-    return _get_num_words(list(sp_object.sents)[rank])
+    rank = int(np.percentile([x for x in range(get_num_sentences(sp_object))], 90))
+    return get_num_words(list(sp_object.sents)[rank])
 
 
 def ps_30(sp_object: Doc):
-    """Percentage of sentences longer than 30 words (PS_30)
+    """
+    Percentage of sentences longer than 30 words (PS_30)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -42,17 +45,27 @@ def ps_30(sp_object: Doc):
     Returns:
         float: the percentage of sentences longer than 30 words
     """
-    sentences_30 = [sentence for sentence in sp_object.sents if _get_num_words(sentence) >= 30]
-    return _safe_divide(len(sentences_30), _get_num_sentences(sp_object))
+    sentences_30 = [sentence for sentence in sp_object.sents if get_num_words(sentence) >= 30]
+    return safe_divide(len(sentences_30), get_num_sentences(sp_object))
 
 
 # ==================== I - T-UNITS ==================== #
+def check_if_complex(sp_root_token: Token):
+    for child in sp_root_token.children:
+        # Subordinate in the children of the root
+        if child.dep_[:3] == "acl" or child.dep_ in ["ccomp", "orphan", "advcl"]:
+            return True
+        if check_if_complex(child):
+            return True
+    return False
+
+
 def _get_t_units(sp_object: Doc, complex_count: bool = False) -> Union[int, Tuple[int, int]]:
     """T-Units counter (_get_t_units)
 
     "The following elements were counted as one T-unit: a single clause, a matrix plus subordinate clause, two or more
     phrases in apposition, and fragments of clauses produced by ellipsis. Coordinate clauses were counted as two
-    t-units. Elements not counted as t-units include backchannel cues such as mhm and yeah, and discourse boundary
+    t-units. Elements not counted as t-units include back-channel cues such as mhm and yeah, and discourse boundary
     markers such as okay, thanks or good. False starts were integrated into the following t-unit." (Young 1995:38)
 
     Args:
@@ -64,17 +77,8 @@ def _get_t_units(sp_object: Doc, complex_count: bool = False) -> Union[int, Tupl
         Tuple[int, int]: the number of T-Units and Complex T-Unit if complex_count=True
     """
     # At least one T-unit per sentence
-    t_unit_count = _get_num_sentences(sp_object)
+    t_unit_count = get_num_sentences(sp_object)
     complex_t_unit_count = 0
-
-    def check_if_complex(sp_root_token: Token):
-        for child in sp_root_token.children:
-            # Subordinate in the children of the root
-            if child.dep_[:3] == "acl" or child.dep_ in ["ccomp", "orphan", "advcl"]:
-                return True
-            if check_if_complex(child):
-                return True
-        return False
 
     for sentence in sp_object.sents:
         complex_t_unit_pres = False
@@ -94,8 +98,9 @@ def _get_t_units(sp_object: Doc, complex_count: bool = False) -> Union[int, Tupl
     return t_unit_count
 
 
-def mlt(sp_object: Doc) -> float:
-    """Mean Lenght of T-Units (MLT)
+def mean_length_tunit(sp_object: Doc) -> float:
+    """
+    Mean Length of T-Units (MLT)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -104,11 +109,12 @@ def mlt(sp_object: Doc) -> float:
         float: the average size of T-Units
     """
     t_units = _get_t_units(sp_object)
-    return _safe_divide(_get_num_words(sp_object), t_units)
+    return safe_divide(get_num_words(sp_object), t_units)
 
 
 def tu_s(sp_object: Doc) -> float:
-    """T-unit per Sentence (TU_S)
+    """
+    T-unit per Sentence (TU_S)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -116,11 +122,12 @@ def tu_s(sp_object: Doc) -> float:
     Returns:
         float: the average number of T-Units per sentence
     """
-    return _safe_divide(_get_t_units(sp_object), _get_num_sentences(sp_object))
+    return safe_divide(_get_t_units(sp_object), get_num_sentences(sp_object))
 
 
 def ctu_tu(sp_object: Doc) -> float:
-    """Complex T-units per T-unit (CTU_TU)
+    """
+    Complex T-units per T-unit (CTU_TU)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -129,7 +136,7 @@ def ctu_tu(sp_object: Doc) -> float:
         float: the average number of Complex T-Units per T-Unit
     """
     tu, ctu = _get_t_units(sp_object, complex_count=True)
-    return _safe_divide(ctu, tu)
+    return safe_divide(ctu, tu)
 
 
 # ====================================================== #
@@ -137,7 +144,8 @@ def ctu_tu(sp_object: Doc) -> float:
 
 # ==================== II - CLAUSES ==================== #
 def _get_clauses(sp_object: Doc, dependent_count: bool = False) -> Union[int, Tuple[int, int]]:
-    """Clauses Counter (_get_clauses)
+    """
+    Clauses Counter (_get_clauses)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -147,7 +155,7 @@ def _get_clauses(sp_object: Doc, dependent_count: bool = False) -> Union[int, Tu
         int: the number of Clauses if dependent_count=False
         Tuple[int, int]: the number of Clauses and Dependent Clauses if dependent_count=True
     """
-    clause_count = _get_num_sentences(sp_object)
+    clause_count = get_num_sentences(sp_object)
     dc_count = 0
 
     for token in sp_object:
@@ -166,7 +174,8 @@ def _get_clauses(sp_object: Doc, dependent_count: bool = False) -> Union[int, Tu
 
 
 def dc_c(sp_object: Doc) -> float:
-    """Dependent Clause per Clause (DC_C)
+    """
+    Dependent Clause per Clause (DC_C)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -175,11 +184,12 @@ def dc_c(sp_object: Doc) -> float:
         float: the average number of Dependent Clauses per Clause
     """
     clause_count, dc_count = _get_clauses(sp_object, dependent_count=True)
-    return _safe_divide(dc_count, clause_count)
+    return safe_divide(dc_count, clause_count)
 
 
 def c_s(sp_object: Doc) -> float:
-    """Clauses per Sentences (C_S)
+    """
+    Clauses per Sentences (C_S)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -187,11 +197,12 @@ def c_s(sp_object: Doc) -> float:
     Returns:
         float: the average number of Clauses per phrase
     """
-    return _safe_divide(_get_clauses(sp_object), _get_num_sentences(sp_object))
+    return safe_divide(_get_clauses(sp_object), get_num_sentences(sp_object))
 
 
 def c_tu(sp_object: Doc) -> float:
-    """Clauses per T-Unit (C_TU)
+    """
+    Clauses per T-Unit (C_TU)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -199,7 +210,7 @@ def c_tu(sp_object: Doc) -> float:
     Returns:
         float: the average number of Clauses per T-Unit
     """
-    return _safe_divide(_get_clauses(sp_object), _get_t_units(sp_object))
+    return safe_divide(_get_clauses(sp_object), _get_t_units(sp_object))
 
 
 # ====================================================== #
@@ -207,7 +218,8 @@ def c_tu(sp_object: Doc) -> float:
 
 # ==================== III - COORDINATE PHRASES ==================== #
 def _get_coordinate(sp_object: Doc) -> int:
-    """Coordinate Counter (_get_coodinate)
+    """
+    Coordinate Counter (_get_coordinate)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -223,7 +235,8 @@ def _get_coordinate(sp_object: Doc) -> int:
 
 
 def cp_c(sp_object: Doc) -> float:
-    """Coordinate phrase per Clause (CP_C)
+    """
+    Coordinate phrase per Clause (CP_C)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -231,11 +244,12 @@ def cp_c(sp_object: Doc) -> float:
     Returns:
         float: the average number of Coordinate phrases per Clause
     """
-    return _safe_divide(_get_coordinate(sp_object), _get_clauses(sp_object))
+    return safe_divide(_get_coordinate(sp_object), _get_clauses(sp_object))
 
 
 def cp_tu(sp_object: Doc) -> float:
-    """Coordinate phrase per T-Unit (CP_TU)
+    """
+    Coordinate phrase per T-Unit (CP_TU)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -243,7 +257,7 @@ def cp_tu(sp_object: Doc) -> float:
     Returns:
         float: the average number of Coordinate phrases per T-Unit
     """
-    return _safe_divide(_get_coordinate(sp_object), _get_t_units(sp_object))
+    return safe_divide(_get_coordinate(sp_object), _get_t_units(sp_object))
 
 
 # ====================================================== #

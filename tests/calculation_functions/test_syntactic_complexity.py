@@ -10,19 +10,19 @@ class TestMls(TestCase):
         # 2 sentences of 4 words each: mls = 8/2 = 4
         text = "Je mange un arbre. Il fait vraiment beau."
         sp_object = tcc.get_sp_object(text)
-        self.assertEqual(sc.mls(sp_object), 4.0)
+        self.assertEqual(sc.mean_length_sentences(sp_object), 4.0)
 
     def test_givenTextWithPunctuations_thenGetMetric(self):
         # 2 sentences of 4 words each (except punctuations): mls = 8/2 = 4
         text = "Je mange, un arbre. Il fait, vraiment: beau."
         sp_object = tcc.get_sp_object(text)
-        self.assertEqual(sc.mls(sp_object), 4.0)
+        self.assertEqual(sc.mean_length_sentences(sp_object), 4.0)
 
     def test_givenTextWithQuotes_thenGetMetric(self):
         # 4 words, one of which has more than 8 letters (except quotes): nmm_8 = 1/4 = 0.25
         text = "Je mange un \"arbre\". Il fait 'vraiment' beau."
         sp_object = tcc.get_sp_object(text)
-        self.assertEqual(sc.mls(sp_object), 4.0)
+        self.assertEqual(sc.mean_length_sentences(sp_object), 4.0)
 
 
 class TestNws90(TestCase):
@@ -143,13 +143,13 @@ class TestMlt(TestCase):
         # 10 words for 2 T-Units : mlt = 10/2 = 5
         text = "Il joue au foot et il aime le beau sport."
         sp_object = tcc.get_sp_object(text)
-        self.assertEqual(sc.mlt(sp_object), 5.0)
+        self.assertEqual(sc.mean_length_tunit(sp_object), 5.0)
 
     def test_givenTextWithPunctuations_thenGetMetrics(self):
         # 12 words for 2 T-Units (without punctuations) : mlt = 12/2 = 6
         text = "Il joue: au foot, au tenis, et il aime le beau sport"
         sp_object = tcc.get_sp_object(text)
-        self.assertEqual(sc.mlt(sp_object), 6.0)
+        self.assertEqual(sc.mean_length_tunit(sp_object), 6.0)
 
 
 class TestTuS(TestCase):

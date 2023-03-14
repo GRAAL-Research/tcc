@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 import re
+from typing import Union, Tuple, List
 
 import spacy
 from spacy.tokens import Doc, Token
-from typing import Union, Tuple, List
 
 
-def _get_num_words(
+def get_num_words(
     sp_object: Union[Doc, List[Token]],
     min_size: int = 0,
     get_size: bool = False,
     get_unique: bool = False,
     without_stop: bool = False,
 ) -> Union[int, Tuple[int, int]]:
-    """Get the number of real words (not punctuation or quotes)
+    """
+    Get the number of real words (not punctuation or quotes)
 
     Args:
         sp_object (Union[spacy.tokens.doc.Doc, list[spacy.tokens.token.Token]]): spaCy object (in case of the Doc type)
-    or list of spaCy tokens (in case of the list of Token type) based on the text that will be computed.
+            or list of spaCy tokens (in case of the list of Token type) based on the text that will be computed.
         min_size (int, optional): minimum size of the word to be taken account of (Default at 0).
         get_size (bool, optional): get the number of letter in the real words (Default at False).
         get_unique (bool, optional): get the number of unique words (Default at False).
@@ -36,7 +37,6 @@ def _get_num_words(
         and len(word.text) >= min_size
         and (not word.is_stop or not without_stop)
     ]
-    # print(filtered_words)
     if get_size:
         size = len("".join(filtered_words))
         return len(filtered_words), size
@@ -45,8 +45,9 @@ def _get_num_words(
     return len(filtered_words)
 
 
-def _get_num_sentences(sp_object: Doc) -> int:
-    """Get the number of sentences
+def get_num_sentences(sp_object: Doc) -> int:
+    """
+    Get the number of sentences
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -56,13 +57,20 @@ def _get_num_sentences(sp_object: Doc) -> int:
 
     Original author: Nicolas Garneau
     """
-    # The default sentence delimiters in spaCy include the semicolon, which we do not want.
-    real_sentences = [sentences for sentences in sp_object.sents if sentences.text[-1] not in [",", ";"]]
+    real_sentences = [sentences for sentences in sp_object.sents if sentences.text[-1] not in [","]]
     return len(real_sentences)
 
 
-def _get_num_syllables(sp_object: Union[Doc, Token]) -> int:
-    """Get the number of syllables
+def syllables_estimate(string: str) -> int:
+    """
+    Estimate the syllables.
+    """
+    return len(re.findall(r"[aeiouyœéèëêîïôûüùâàô]+", string))
+
+
+def get_num_syllables(sp_object: Union[Doc, Token]) -> int:
+    """
+    Get the number of syllables
 
     Args:
         sp_object (Union[spacy.tokens.doc.Doc, spacy.tokens.token.Token]): spaCy object based on the text
@@ -73,9 +81,6 @@ def _get_num_syllables(sp_object: Union[Doc, Token]) -> int:
 
     Original author: Nicolas Garneau
     """
-
-    def syllables_estimate(string: str) -> int:
-        return len(re.findall(r"[aeiouyœéèëêîïôûüùâàô]+", string))
 
     # In the case where only a word spaCy object (spacy.tokens.token.Token) is passed.
     if isinstance(sp_object, Token):
@@ -88,7 +93,7 @@ def _get_num_syllables(sp_object: Union[Doc, Token]) -> int:
     return syllables_estimate(" ".join(filtered_words))
 
 
-def _safe_divide(x: Union[int, float], y: Union[int, float], returned_value: Union[int, float] = 0.0) -> float:
+def safe_divide(x: Union[int, float], y: Union[int, float], returned_value: Union[int, float] = 0.0) -> float:
     """Safe divide x/y
 
     Args:
