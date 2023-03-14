@@ -31,7 +31,12 @@ def nws_90(sp_object: Doc) -> int:
     """
     if not len(sp_object):
         return 0
-    rank = int(np.percentile([x for x in range(get_num_sentences(sp_object))], 90))
+    sentences = [x for x in range(get_num_sentences(sp_object))]
+    if len(sentences) == 0:
+        # Fail-case if the SpaCy model could not extract a clear sentence.
+        # It happens rarely.
+        return 0
+    rank = int(np.percentile(sentences, 90))
     return get_num_words(list(sp_object.sents)[rank])
 
 
