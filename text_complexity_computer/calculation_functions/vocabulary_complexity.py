@@ -11,7 +11,8 @@ from .metrics_utils import get_num_words, safe_divide
 
 
 def pa(sp_object: Doc, language: str) -> float:
-    """Percentage of words not in a reference list (PA) of easy words using the Gougenheim list
+    """
+    Percentage of words not in a reference list (PA) of easy words using the Gougenheim list
     (Gougenheim et al., 1964) in French and the X list in English.
 
     Args:
@@ -32,7 +33,8 @@ def pa(sp_object: Doc, language: str) -> float:
 
 
 def nlm(sp_object: Doc) -> float:
-    """Average size of words (NLM)
+    """
+    Average size of words (NLM)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -45,7 +47,8 @@ def nlm(sp_object: Doc) -> float:
 
 
 def nmm_8(sp_object) -> float:
-    """Average number of words with more than 8 letters (NMM_8)
+    """
+    Average number of words with more than 8 letters (NMM_8)
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -57,7 +60,8 @@ def nmm_8(sp_object) -> float:
 
 
 def uni_gram_lem(sp_object: Doc, language: str) -> float:
-    """Uni-gram Model on Lemma (Uni_gram_Lem) (using a uni-gram model) using frequencies
+    """
+    Uni-gram Model on Lemma (Uni_gram_Lem) (using a uni-gram model) using frequencies
     Lexique383 (New B. et al., 2005) for French and SUBTLEX for English (https://osf.io/djpqz/#!).
 
     Args:

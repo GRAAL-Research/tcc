@@ -7,7 +7,8 @@ import ahocorasick
 
 
 def clean_text(text: str) -> str:
-    """Text cleaner
+    """
+    Text cleaner
     Below is a comprehensive list of changes:
         - remove the bullet lists marker
         - special characters
@@ -36,8 +37,7 @@ def clean_text(text: str) -> str:
 
 def read_word_lists(file_path: str, verbosity: int) -> Tuple[Dict, Dict]:
     """
-    reads lists in the format
-    firstPersonPronouns = I,we,me,us,my,our,myself,ourselves
+    Reads lists in the format: `"firstPersonPronouns = I,we,me,us,my,our,myself,ourselves"`
     """
     word_lists = {}
     mwe_list = {}
@@ -75,8 +75,7 @@ def read_word_lists(file_path: str, verbosity: int) -> Tuple[Dict, Dict]:
 
 def read_num_list(file_path: str) -> Dict:
     """
-    reads a numfile in the format
-    1625260 years year NOUN Number=Plur
+    Reads a numfile in the format: `"1625260 years year NOUN Number=Plur"`.
     This produces a "most frequent tag" substitute for tagging
     """
     tag_list = {}
