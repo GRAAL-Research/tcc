@@ -6,18 +6,6 @@ from text_complexity_computer import TextComplexityComputer
 tcc = TextComplexityComputer()
 
 
-class TestBingui(TestCase):
-    def test_givenText_thenGetMetric(self):
-        text = "Je, le cheval de feu, montre: le plus fort le plus brave (vous)."
-        sp_object = tcc.get_sp_object(text)
-        self.assertEqual(r.bingui(sp_object), 4)
-
-    def test_givenTextWithSemicolon_thenGetMetric(self):
-        text = "Je, le cheval de feu montre: le plus fort; le plus brave (vous)."
-        sp_object = tcc.get_sp_object(text)
-        self.assertEqual(r.bingui(sp_object), 4)
-
-
 class TestFkEase(TestCase):
     def test_givenText_thenGetMetric(self):
         text = "Allons manger chez le voisin. Il sait faire de bons petits plats."

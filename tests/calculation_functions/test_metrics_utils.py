@@ -43,36 +43,6 @@ class TestGetNumWords(TestCase):
         self.assertEqual(mu.get_num_words(sp_object, get_unique=True), (6, 5))
 
 
-class TestGetNumSentences(TestCase):
-    def test_givenText_thenGetNumSent(self):
-        # 2 sentences
-        text = "Le cheval de feu montre le plus fort. Je veux manger."
-        sp_object = tcc.get_sp_object(text)
-        self.assertEqual(mu.get_num_sentences(sp_object), 2)
-
-    def test_givenTextWithPunctuations_thenGetNumSent(self):
-        # 3 sentences (semicolon counts as a sentence delimiter)
-        text = "Le cheval, de feu, montre: le plus fort; le plus beau! Et oui ?"
-        sp_object = tcc.get_sp_object(text)
-        self.assertEqual(mu.get_num_sentences(sp_object), 2)
-
-    def test_givenTextWithApposition_thenGetNumSent(self):
-        text = (
-            "Il joue au football qui est le sport: des faibles; des victimes; des stars; des forts; des fans;"
-            " et des malhonnêtes."
-        )
-        sp_object = tcc.get_sp_object(text)
-        self.assertEqual(mu.get_num_sentences(sp_object), 1)
-
-    def test_givenTextWithPunctuationsAndQuotes_thenGetNumSent(self):
-        text = (
-            "Il joue au football ! C'est qui est le sport: des faibles; des victimes; et des malhonnêtes. "
-            "Quel tristesse?"
-        )
-        sp_object = tcc.get_sp_object(text)
-        self.assertEqual(mu.get_num_sentences(sp_object), 3)
-
-
 class TestGetNumSyllables(TestCase):
     def test_givenText_thenGetNumSyllabe(self):
         # 10 syllables

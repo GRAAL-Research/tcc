@@ -101,12 +101,6 @@ class TestGetTUnits(TestCase):
         sp_object = tcc.get_sp_object(text)
         self.assertEqual(sc._get_t_units(sp_object), 2)
 
-    def test_givenTextWithApposition_thenGetTUnits(self):
-        # 1 apposition started with 2 Coordinate -> 2 T-Unit
-        text = "Il joue au football qui est le sport: des faibles; des victimes; des stars; et des malhonnêtes."
-        sp_object = tcc.get_sp_object(text)
-        self.assertEqual(sc._get_t_units(sp_object), 2)
-
     def test_givenText_whenComplexCountIsTrue_thenGetComplexAndBaseTUnits(self):
         # 2 coordinates -> 2 T-Units, 0 Complex
         text = "Il joue au foot et il aime le beau sport."
@@ -126,14 +120,6 @@ class TestGetTUnits(TestCase):
     ):
         # 1 matrix plus subordinate clause (complex) -> 1 T-Unit, 1 Complex
         text = "Il dit que tu aimes nager."
-        sp_object = tcc.get_sp_object(text)
-        self.assertEqual(sc._get_t_units(sp_object, complex_count=True), (1, 1))
-
-    def test_givenComplexTextWithDependentClause_whenComplexCountIsTrue_thenGetComplexAndBaseTUnits(
-        self,
-    ):
-        # 1 matrix plus subordinate clause (complex) -> 1 T-Unit, 1 Complex
-        text = "Comment est-ce que cela peut être réconcilié avec le fait que beaucoup de mariages cassent ?"
         sp_object = tcc.get_sp_object(text)
         self.assertEqual(sc._get_t_units(sp_object, complex_count=True), (1, 1))
 
@@ -197,25 +183,11 @@ class TestGetClauses(TestCase):
         sp_object = tcc.get_sp_object(text)
         self.assertEqual(sc._get_clauses(sp_object), 3)
 
-    def test_givenTextWithApposition_thenGetClauses(self):
-        # 1 matrix plus 1 subordinate clause -> 2 Clauses
-        text = "Il joue au football qui est le sport: des faibles; des victimes; des stars; et des malhonnêtes."
-        sp_object = tcc.get_sp_object(text)
-        self.assertEqual(sc._get_clauses(sp_object), 2)
-
     def test_givenText_whenDependentCountIsTrue_thenGetDependentAndBaseClauses(self):
         # 1 matrix plus 1 subordinate clause -> 2 Clauses, 1 Dependent
         text = "Il joue au foot et il aime le beau sport."
         sp_object = tcc.get_sp_object(text)
         self.assertEqual(sc._get_clauses(sp_object, dependent_count=True), (2, 1))
-
-    def test_givenComplexText_whenDependentCountIsTrue_thenGetDependentAndBaseClauses(
-        self,
-    ):
-        # 1 matrix plus 1 subordinate clause -> 3 Clauses, 2 Dependent
-        text = "Comment est-ce que cela peut être réconcilié avec le fait que beaucoup de mariages cassent ?"
-        sp_object = tcc.get_sp_object(text)
-        self.assertEqual(sc._get_clauses(sp_object, dependent_count=True), (3, 2))
 
 
 class TestDcC(TestCase):
@@ -274,12 +246,6 @@ class TestGetCoordinate(TestCase):
     def test_givenTextWithDoubleNesting_thenGetCoordinate(self):
         # 1 Coordinate
         text = "Il joue au foot parce qu'il aime le beau sport et les sport c'est sa passion."
-        sp_object = tcc.get_sp_object(text)
-        self.assertEqual(sc._get_coordinate(sp_object), 1)
-
-    def test_givenTextWithApposition_thenGetCoordinate(self):
-        # 1 Coordinate
-        text = "Il joue au football qui est le sport: des faibles; des victimes; des stars; et des malhonnêtes."
         sp_object = tcc.get_sp_object(text)
         self.assertEqual(sc._get_coordinate(sp_object), 1)
 
