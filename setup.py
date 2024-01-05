@@ -71,7 +71,7 @@ def main():
         include_package_data=True,
         install_requires=["spacy", "numpy", "pandas", "pyahocorasick", "scikit-learn"],
         python_requires=">=3.7",
-        description="A library for evaluate text difficulty in French and English.",
+        description="A library for evaluate text difficulty in French.",
         long_description=readme,
         long_description_content_type="text/markdown",
     )

@@ -12,8 +12,7 @@ from .metrics_utils import get_num_words, safe_divide
 
 def pa(sp_object: Doc, language: str) -> float:
     """
-    Percentage of words not in a reference list (PA) of easy words using the Gougenheim list
-    (Gougenheim et al., 1964) in French and the X list in English.
+    Percentage of words not in a reference list (PA) of easy words using the Gougenheim list (Gougenheim et al., 1964).
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
@@ -62,7 +61,7 @@ def nmm_8(sp_object) -> float:
 def uni_gram_lem(sp_object: Doc, language: str) -> float:
     """
     Uni-gram Model on Lemma (Uni_gram_Lem) (using a uni-gram model) using frequencies
-    Lexique383 (New B. et al., 2005) for French and SUBTLEX for English (https://osf.io/djpqz/#!).
+    Lexique383 (New B. et al., 2005).
 
     Args:
         sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.

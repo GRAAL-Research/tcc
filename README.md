@@ -16,11 +16,11 @@
 
 ## Here is TextComplexityComputer.
 
-TextComplexityComputer is a state-of-the-art library for assessing complexity of a text in French and English.
+TextComplexityComputer is a state-of-the-art library for assessing complexity of a text in French.
 
 Use TextComplexityComputer to
 
-- assess the complexity of a text in French and English,
+- assess the complexity of a text in French,
 - retrain our model with your text and using our features.
 
 TextComplexityComputer is compatible with the __latest version of Scikit-Learn__ and  __Python >= 3.7__.

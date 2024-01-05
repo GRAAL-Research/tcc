@@ -33,41 +33,28 @@ class TextComplexityComputer:
         compute(text: str): Compute the text and evaluate the global difficulty level
     """
 
-    def __init__(self, language: str = "fr", scaler: Union[str, None] = "MinMaxScaler", verbosity: int = 1):
+    def __init__(self, scaler: Union[str, None] = "MinMaxScaler", verbosity: int = 1):
         """
         Constructor of TextComplexityComputer
 
         Args:
-            language (str): The language to use, either `'fr'` or `'en'`. By default, `'fr'`.
             scaler (Union[str, None]): chose the scaler between StandardScaler (by default), MinMaxScaler and none.
         """
-        self.language = language
-        if self.language == "fr":
-            model_name = "fr_core_news_sm"
-            try:
-                self.tagger = spacy.load(model_name)
-            except OSError:
-                print(download(model_name))
-                self.tagger = spacy.load(model_name)
+        model_name = "fr_core_news_sm"
+        try:
+            self.tagger = spacy.load(model_name)
+        except OSError:
+            print(download(model_name))
+            self.tagger = spacy.load(model_name)
 
-        elif self.language == "en":
-            model_name = "en_core_web_sm"
-            try:
-                self.tagger = spacy.load(model_name)
-            except OSError:
-                print(download(model_name))
-                self.tagger = spacy.load(model_name)
-        else:
-            raise ValueError(f"language can be 'fr' or 'en', not {self.language}")
-
-        biberpy.language = self.language
+        biberpy.language = "fr"
 
         self.word_lists, self.mwe_list = read_word_lists(
-            os.path.join(os.path.dirname(__file__), 'resources', self.language, f"{self.language}.properties"),
+            os.path.join(os.path.dirname(__file__), 'resources', "fr", "fr.properties"),
             verbosity=verbosity,
         )
         self.tag_list = read_num_list(
-            os.path.join(os.path.dirname(__file__), 'resources', self.language, f"{self.language}.tag.num"),
+            os.path.join(os.path.dirname(__file__), 'resources', "fr", "fr.tag.num"),
         )
 
         biberpy.word_lists = self.word_lists
@@ -79,7 +66,7 @@ class TextComplexityComputer:
 
         if scaler:
             with open(
-                os.path.join(os.path.dirname(__file__), 'resources', self.language, f"{self.language}_{scaler}.pickle"),
+                os.path.join(os.path.dirname(__file__), 'resources', "fr", f"fr_{scaler}.pickle"),
                 "rb",
             ) as file:
                 self.scaler = pickle.load(file)
@@ -88,9 +75,7 @@ class TextComplexityComputer:
             self.scaler = None
 
         # Get Classifier
-        with open(
-            os.path.join(os.path.dirname(__file__), 'resources', self.language, f"{self.language}_model.pickle"), "rb"
-        ) as rb:
+        with open(os.path.join(os.path.dirname(__file__), 'resources', "fr", f"fr_model.pickle"), "rb") as rb:
             self.model = pickle.load(rb)
 
     def get_metrics_scores(
