@@ -20,13 +20,8 @@ TextComplexityComputer is a state-of-the-art library for assessing complexity of
 
 Use TextComplexityComputer to
 
-- parse multinational address using one of our pretrained models with or without attention mechanism,
-- parse addresses directly from the command line without code to write,
-- parse addresses with our out-of-the-box FastAPI parser,
-- retrain our pretrained models on new data to improve parsing on specific country address patterns,
-- retrain our pretrained models with new prediction tags easily,
-- retrain our pretrained models with or without freezing some layers,
-- train a new Seq2Seq addresses parsing models easily using a new model configuration.
+- assess the complexity of a text in French and English,
+- retrain our model with your text and using our features.
 
 TextComplexityComputer is compatible with the __latest version of Scikit-Learn__ and  __Python >= 3.7__.
 
