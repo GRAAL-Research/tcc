@@ -5,10 +5,9 @@
 [![PyPI Status](https://pepy.tech/badge/text_complexity_computer)](https://pepy.tech/project/text_complexity_computer)
 [![Downloads](https://pepy.tech/badge/text_complexity_computer/month)](https://pepy.tech/project/text_complexity_computer)
 
-[![Formatting](https://github.com/GRAAL-Research/text_complexity_computer/actions/workflows/formatting.yml/badge.svg?branch=stable)](https://github.com/GRAAL-Research/text_complexity_computer/actions/workflows/formatting.yml)
-[![Linting](https://github.com/GRAAL-Research/text_complexity_computer/actions/workflows/linting.yml/badge.svg?branch=stable)](https://github.com/GRAAL-Research/text_complexity_computer/actions/workflows/linting.yml)
-[![Tests](https://github.com/GRAAL-Research/text_complexity_computer/actions/workflows/tests.yml/badge.svg?branch=stable)](https://github.com/GRAAL-Research/text_complexity_computer/actions/workflows/tests.yml)
-[.gitignore](.gitignore)
+[![Formatting](https://github.com/GRAAL-Research/tcc/actions/workflows/formatting.yml/badge.svg?branch=stable)](https://github.com/GRAAL-Research/tcc/actions/workflows/formatting.yml)
+[![Linting](https://github.com/GRAAL-Research/tcc/actions/workflows/linting.yml/badge.svg?branch=stable)](https://github.com/GRAAL-Research/tcc/actions/workflows/linting.yml)
+[![Tests](https://github.com/GRAAL-Research/tcc/actions/workflows/tests.yml/badge.svg?branch=stable)](https://github.com/GRAAL-Research/tcc/actions/workflows/tests.yml)
 [![pr welcome](https://img.shields.io/badge/PR-Welcome-%23FF8300.svg?)](https://img.shields.io/badge/PR-Welcome-%23FF8300.svg?)
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](http://www.gnu.org/licenses/lgpl-3.0)
 
