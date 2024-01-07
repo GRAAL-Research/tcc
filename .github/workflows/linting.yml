@@ -18,6 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e .
+          pip install -Ur styling_requirements.txt
       - name: PyLint
         run: |
           pylint text_complexity_computer/ tests/
