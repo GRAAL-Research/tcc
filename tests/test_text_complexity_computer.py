@@ -3,17 +3,16 @@ from unittest import TestCase, main
 import spacy
 from spacy.cli import download
 from spacy.tokens import Doc
-import pandas as pd
 
 from text_complexity_computer import TextComplexityComputer
 
 
 class TestTCC(TestCase):
     def test_init(self):
-        tcc = TextComplexityComputer()
+        _ = TextComplexityComputer()
 
     def test_with_minmax(self):
-        tcc = TextComplexityComputer(scaler="MinMaxScaler")
+        _ = TextComplexityComputer(scaler="MinMaxScaler")
 
     def test_get_sp_object(self):
         try:

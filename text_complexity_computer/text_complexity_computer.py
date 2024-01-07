@@ -75,7 +75,7 @@ class TextComplexityComputer:
             self.scaler = None
 
         # Get Classifier
-        with open(os.path.join(os.path.dirname(__file__), 'resources', "fr", f"fr_model.pickle"), "rb") as rb:
+        with open(os.path.join(os.path.dirname(__file__), 'resources', "fr", "fr_model.pickle"), "rb") as rb:
             self.model = pickle.load(rb)
 
     def get_metrics_scores(

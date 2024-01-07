@@ -1,3 +1,5 @@
+# pylint: disable=protected-access
+
 from unittest import TestCase, main
 from text_complexity_computer.calculation_functions import syntactic_complexity as sc
 from text_complexity_computer import TextComplexityComputer
