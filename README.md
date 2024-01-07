@@ -17,8 +17,8 @@
 ## Here is TextComplexityComputer.
 
 TextComplexityComputer is a state-of-the-art library for assessing complexity of a text in French. Use
-it to assess the complexity of a text in French. it is compatible with the __latest version of Scikit-Learn__ and  _
-_Python >= 3.7__.
+it to assess the complexity of a text in French. it is compatible with the __latest version of Scikit-Learn__ and
+__Python >= 3.8__.
 
 ## Getting Started:
 
@@ -27,6 +27,7 @@ from text_complexity_computer import TextComplexityComputer
 
 tcc = TextComplexityComputer()
 print(tcc.get_metrics_scores("Alibaba et les 40 voleurs."))
+print(tcc.compute("Alibaba et les 40 voleurs."))
 ```
 
 ------------------
