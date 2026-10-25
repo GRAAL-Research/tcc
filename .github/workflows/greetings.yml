@@ -1,6 +1,6 @@
 name: Greetings
 
-on: [ pull_request_target, issues ]
+on: [pull_request_target, issues]
 
 jobs:
   greeting:
@@ -11,6 +11,5 @@ jobs:
     steps:
       - uses: actions/first-interaction@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: "Thank you for you interest in improving TCC."
-          pr-message: "Thank you for you interest in improving TCC."
+          issue_message: "Thank you for your interest in improving TCC."
+          pr_message: "Thank you for your interest in improving TCC."
