@@ -16,7 +16,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.2
         with:
           python-version: "3.11"
@@ -36,7 +36,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.2
         with:
           python-version: ${{ matrix.python-version }}
@@ -47,7 +47,7 @@ jobs:
   lowest-dependencies:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.2
         with:
           python-version: "3.11"
@@ -57,7 +57,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.2
       - run: uv build
       - name: Check the wheel ships the model resources
