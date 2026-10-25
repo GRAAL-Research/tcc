@@ -144,3 +144,6 @@ text_complexity_computer/version.py
 *.ckpt
 
 *mlruns/
+
+# uv
+.venv/

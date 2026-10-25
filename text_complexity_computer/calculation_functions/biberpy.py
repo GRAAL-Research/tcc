@@ -1,6 +1,3 @@
-# pylint: disable=bare-except, too-many-boolean-expressions, too-many-nested-blocks
-
-# -*- coding: utf-8 -*-
 # Code adaptated and taken from the Python version for doug Biber's MDA
 # https://github.com/ssharoff/biberpy
 # Copyright (C) 2017-2021  Serge Sharoff
@@ -61,10 +58,16 @@ dimnames = {
     "P67": "analNegn",
 }
 
+# Module state set by configure() before computing the dimensions.
 language = None
 tag_list = None
 word_lists = None
 mwe_list = None
+
+
+def configure(language: str, word_lists: dict, mwe_list: dict, tag_list: dict) -> None:
+    """Set the language resources used to compute the Biber dimensions."""
+    globals().update(language=language, word_lists=word_lists, mwe_list=mwe_list, tag_list=tag_list)
 
 
 def word_at(w):
@@ -428,12 +431,12 @@ def typeTokenRatio(doc):
     for w in doc[:biberLength]:
         if not is_word_set(word_at(w), "clausePunctuation"):
             tokenCounter += 1
-            if not lemma_at(w) in seenBefore:
+            if lemma_at(w) not in seenBefore:
                 seenBefore[lemma_at(w)] = 1
     return len(seenBefore) / (tokenCounter + 0.000001)
 
 
-def getbiberdims(doc):
+def getbiberdims(doc: str) -> dict[str, float]:
     """
     processes each document as a list of tokenised words
 

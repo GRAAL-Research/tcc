@@ -1,8 +1,110 @@
-[tool.black]
-line-length = 120
-skip-string-normalization = true
-extend-exclude = "/(slides)/"
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
 
-testpaths = [
-    "tests",
+[project]
+name = "text_complexity_computer"
+version = "0.3.0"
+description = "Assess the complexity of French texts."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "GPL-3.0-only"
+license-files = ["LICENSE.txt"]
+authors = [{ name = "le-smog", email = "le-smog@gmx.com" }]
+maintainers = [{ name = "David Beauchemin" }]
+keywords = ["nlp", "french", "readability", "text complexity", "spacy"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: French",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+    "Typing :: Typed",
 ]
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "pyahocorasick>=2.1",
+    "spacy>=3.8.15,<4",
+    # preshed 3.0.14 breaks spaCy tokenizer loading: https://github.com/explosion/spaCy/issues/14058
+    "preshed>=3.0.9,!=3.0.14",
+]
+
+[project.urls]
+Homepage = "https://github.com/GRAAL-Research/tcc"
+Documentation = "https://graal-research.github.io/tcc"
+Changelog = "https://github.com/GRAAL-Research/tcc/blob/main/CHANGELOG.md"
+Issues = "https://github.com/GRAAL-Research/tcc/issues"
+
+[dependency-groups]
+dev = [
+    "fr-core-news-sm",
+    "mypy>=1.13",
+    "pandas-stubs>=2.1",
+    "pytest>=8",
+    "pytest-cov>=6",
+    "ruff>=0.8",
+]
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.27",
+]
+
+[tool.hatch.build.targets.sdist]
+include = ["text_complexity_computer", "tests", "CHANGELOG.md"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.uv.sources]
+fr-core-news-sm = { url = "https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.8.0/fr_core_news_sm-3.8.0-py3-none-any.whl" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "--strict-config"]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["text_complexity_computer"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "C4", "RUF", "PL", "S", "PT"]
+ignore = [
+    "PLR2004", # magic values are the metrics' thresholds
+    "S101",    # asserts in tests
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Third-party code adapted from https://github.com/ssharoff/biberpy: keep it close to upstream.
+"text_complexity_computer/calculation_functions/biberpy.py" = ["N", "PL", "SIM", "B", "E722", "E741", "S110", "RUF"]
+"scripts/*" = ["S301"]
+
+[tool.ruff.format]
+quote-style = "preserve"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+files = ["text_complexity_computer", "tests"]
+
+[[tool.mypy.overrides]]
+module = "text_complexity_computer.calculation_functions.biberpy"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["ahocorasick", "spacy.*"]
+ignore_missing_imports = true

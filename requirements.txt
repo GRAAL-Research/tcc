@@ -1,5 +1,0 @@
-numpy
-pandas
-spacy
-pyahocorasick
-scikit-learn

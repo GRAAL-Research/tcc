@@ -1,197 +1,188 @@
-import os
-import pickle
 import warnings
+from collections.abc import Callable, Iterable
 from functools import partial
-from typing import Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
 import spacy
-from spacy.cli import download
+from spacy.cli.download import download
+from spacy.language import Language
 from spacy.tokens import Doc
 
-from .calculation_functions import biberpy, vocabulary_complexity
 from .calculation_functions import (
+    biberpy,
+    lexical_diversity,
     readability,
     syntactic_complexity,
-    lexical_diversity,
+    vocabulary_complexity,
 )
-from .tools import clean_text, read_word_lists, read_num_list
+from .models import RandomForestClassifier, Scaler
+from .tools import clean_text, read_num_list, read_word_lists, resource_path
+
+__all__ = ["METRICS", "SCALERS", "TextComplexityComputer"]
+
+LANGUAGE = "fr"
+SPACY_MODEL_NAME = "fr_core_news_sm"
+SCALERS = ("MinMaxScaler", "StandardScaler")
+
+ScalerName = Literal["MinMaxScaler", "StandardScaler"]
+
+METRICS: dict[str, Callable[[Doc], float]] = {
+    "mls": syntactic_complexity.mean_length_sentences,
+    "ps_30": syntactic_complexity.ps_30,
+    "nws_90": syntactic_complexity.nws_90,
+    "mlt": syntactic_complexity.mean_length_tunit,
+    "tu_s": syntactic_complexity.tu_s,
+    "ctu_tu": syntactic_complexity.ctu_tu,
+    "dc_c": syntactic_complexity.dc_c,
+    "c_s": syntactic_complexity.c_s,
+    "c_tu": syntactic_complexity.c_tu,
+    "cp_c": syntactic_complexity.cp_c,
+    "cp_tu": syntactic_complexity.cp_tu,
+    "pa": partial(vocabulary_complexity.pa, language=LANGUAGE),
+    "nlm": vocabulary_complexity.nlm,
+    "uni_gram_lem": partial(vocabulary_complexity.uni_gram_lem, language=LANGUAGE),
+    "msttr": lexical_diversity.mean_sequential_ttr,
+    # The bundled model was trained with the MTLD value in the "mattr" feature: keep it to preserve predictions.
+    "mattr": lexical_diversity.measure_textual_lexical_diversity,
+    "mtld": lexical_diversity.measure_textual_lexical_diversity,
+    "fk_ease": readability.fk_ease,
+    "bingui": readability.bingui,
+    "km_score": readability.km_formula,
+}
+
+
+def _load_spacy_model(model_name: str) -> Language:
+    try:
+        return spacy.load(model_name)
+    except OSError:
+        download(model_name)
+        return spacy.load(model_name)
+
+
+def _normalize_metrics(metrics: Iterable[str] | str | None) -> list[str]:
+    if metrics is None:
+        return []
+    if metrics == "all":
+        return list(METRICS)
+    selected = [metrics] if isinstance(metrics, str) else list(metrics)
+    unknown = sorted(set(selected) - set(METRICS))
+    if unknown:
+        raise ValueError(f"Unknown metrics: {unknown}. Available metrics: {sorted(METRICS)}.")
+    return selected
 
 
 class TextComplexityComputer:
+    """Assess the complexity of a French text.
+
+    Args:
+        scaler: Scaler applied to the metrics before classification: ``"MinMaxScaler"`` (default),
+            ``"StandardScaler"`` or ``None`` to use raw metrics.
+        verbosity: Verbosity level when reading the Biber word lists (0 is silent).
+
+    Example:
+        >>> tcc = TextComplexityComputer()
+        >>> tcc.compute("Alibaba et les 40 voleurs.")
+        array([1])
     """
-    TextComplexityComputer class
 
-    Attributes:
-        scaler (Union[str, None]): chose the scaler between MinMaxScaler (by default), StandardScaler and none.
+    def __init__(self, scaler: ScalerName | None = "MinMaxScaler", verbosity: int = 1) -> None:
+        if scaler is not None and scaler not in SCALERS:
+            raise ValueError(f"Unknown scaler {scaler!r}. Choose one of {SCALERS} or None.")
 
-    Methods:
-        get_metrics_scores(text: str, metrics: Union[list, str, None] = 'all', with_biberpy: bool = True): Getter
-    of the metrics scores
-        get_sp_object(text: str): Getter of the spaCy object
-        compute(text: str): Compute the text and evaluate the global difficulty level
-    """
+        self.tagger = _load_spacy_model(SPACY_MODEL_NAME)
+        self.tagger.max_length = 5_000_000
 
-    def __init__(self, scaler: Union[str, None] = "MinMaxScaler", verbosity: int = 1):
-        """
-        Constructor of TextComplexityComputer
+        self.word_lists, self.mwe_list = read_word_lists(resource_path(LANGUAGE, "fr.properties"), verbosity=verbosity)
+        self.tag_list = read_num_list(resource_path(LANGUAGE, "fr.tag.num"))
+        biberpy.configure(language=LANGUAGE, word_lists=self.word_lists, mwe_list=self.mwe_list, tag_list=self.tag_list)
 
-        Args:
-            scaler (Union[str, None]): chose the scaler between StandardScaler (by default), MinMaxScaler and none.
-        """
-        model_name = "fr_core_news_sm"
-        try:
-            self.tagger = spacy.load(model_name)
-        except OSError:
-            print(download(model_name))
-            self.tagger = spacy.load(model_name)
-
-        biberpy.language = "fr"
-
-        self.word_lists, self.mwe_list = read_word_lists(
-            os.path.join(os.path.dirname(__file__), 'resources', "fr", "fr.properties"),
-            verbosity=verbosity,
-        )
-        self.tag_list = read_num_list(
-            os.path.join(os.path.dirname(__file__), 'resources', "fr", "fr.tag.num"),
-        )
-
-        biberpy.word_lists = self.word_lists
-        biberpy.mwe_list = self.mwe_list
-
-        biberpy.tag_list = self.tag_list
-
-        self.tagger.max_length = 5000000
-
-        if scaler:
-            with open(
-                os.path.join(os.path.dirname(__file__), 'resources', "fr", f"fr_{scaler}.pickle"),
-                "rb",
-            ) as file:
-                self.scaler = pickle.load(file)
+        self.scaler: Scaler | None = None
+        if scaler is None:
+            warnings.warn("You are running TextComplexityComputer without scaler (scaler=None).", stacklevel=2)
         else:
-            warnings.warn("You are running TextComplexityComputer without scaler (scaler=None).")
-            self.scaler = None
+            self.scaler = Scaler(resource_path(LANGUAGE, f"fr_{scaler}.npz"))
 
-        # Get Classifier
-        with open(os.path.join(os.path.dirname(__file__), 'resources', "fr", "fr_model.pickle"), "rb") as rb:
-            self.model = pickle.load(rb)
+        self.model = RandomForestClassifier(resource_path(LANGUAGE, "fr_model.npz"))
 
     def get_metrics_scores(
         self,
         text: str,
-        metrics: Union[list, str, None] = "all",
+        metrics: Iterable[str] | str | None = "all",
         with_biberpy: bool = True,
     ) -> pd.DataFrame:
-        """
-        Getter of the metrics scores
-            Details of metrics:
-                - mls: Mean Length of Sentences
-                - ps_30: Percentage of sentences longer than 30 words
-                - nws_90: Length of the 90th percentile sentence
-                - mlt: Mean Length of T-Unit
-                - tu_s: T-Unit per Sentences
-                - ctu_tu: Complex T-Unit per T-Unit
-                - dc_c: Dependent clause per Clause
-                - c_s: Clauses per Sentences
-                - c_tu: Clauses per T-Unit
-                - cp_c: Coordinate phrase per Clause
-                - cp_tu: Coordinate phrase per T-Unit
-                - pa: Percentage of words not in a reference list (Gougenheim list)
-                - nlm: Number of letter per word
-                - uni_gram_lem: Uni-gram model with Lexique3 on lemmas
-                - msttr: Mean Sequential Type-Token Ration
-                - mtld: Measure of Textual Lexical Diversity
-                - mtld_ma_bid: MTLD-Moving Average bidirectionnal
-                - fk_ease: Flesch-Kincaid reading ease ('homemade')
-                - textstat\'s fk_ease: Flesch-Kincaid reading ease (from textstat's library)
-                - Bingui: Ratio comma / sentence extended to other punctuations
-                - km_score: Kandel and Moles formula
-                - and others from biberpy module (see biberpy.py documentation for more).
+        """Compute the metrics scores of a text.
+
+        Available metrics (outside biberpy):
+
+        - ``mls``: mean length of sentences
+        - ``ps_30``: percentage of sentences longer than 30 words
+        - ``nws_90``: length of the 90th percentile sentence
+        - ``mlt``: mean length of T-units
+        - ``tu_s``: T-units per sentence
+        - ``ctu_tu``: complex T-units per T-unit
+        - ``dc_c``: dependent clauses per clause
+        - ``c_s``: clauses per sentence
+        - ``c_tu``: clauses per T-unit
+        - ``cp_c``: coordinate phrases per clause
+        - ``cp_tu``: coordinate phrases per T-unit
+        - ``pa``: percentage of words not in a reference list (Gougenheim list)
+        - ``nlm``: number of letters per word
+        - ``uni_gram_lem``: uni-gram model with Lexique3 on lemmas
+        - ``msttr``: mean sequential type-token ratio
+        - ``mattr``: alias of ``mtld`` kept for compatibility with the bundled model
+        - ``mtld``: measure of textual lexical diversity
+        - ``fk_ease``: Flesch-Kincaid reading ease
+        - ``bingui``: punctuation marks per sentence
+        - ``km_score``: Kandel and Moles formula
+
+        The biberpy dimensions are the values of ``biberpy.dimnames``.
 
         Args:
-            text (string): text that will be computed
-            metrics (Union[list, str, None], optional): list of metrics that will be computed (outside biberpy). By
-            default, it will process them all.
-            with_biberpy (bool, optional): process the biberpy's metrics (default at True).
+            text: Text to compute.
+            metrics: Metrics to compute (outside biberpy): ``"all"`` (default), a metric name, a list of metric
+                names or ``None``.
+            with_biberpy: Whether to compute the biberpy dimensions.
 
         Returns:
-            pd.DataFrame: the selected metrics scores
+            A one-row DataFrame of the selected metrics, columns sorted by name. Values are scaled when a scaler
+            is set; scaling uses every metric, so unselected ones count as 0.
+
+        Raises:
+            ValueError: If a metric name is unknown.
         """
+        selected_metrics = _normalize_metrics(metrics)
         text = clean_text(text)
 
-        metrics_call = {
-            "mls": syntactic_complexity.mean_length_sentences,
-            "ps_30": syntactic_complexity.ps_30,
-            "nws_90": syntactic_complexity.nws_90,
-            "mlt": syntactic_complexity.mean_length_tunit,
-            "tu_s": syntactic_complexity.tu_s,
-            "ctu_tu": syntactic_complexity.ctu_tu,
-            "dc_c": syntactic_complexity.dc_c,
-            "c_s": syntactic_complexity.c_s,
-            "c_tu": syntactic_complexity.c_tu,
-            "cp_c": syntactic_complexity.cp_c,
-            "cp_tu": syntactic_complexity.cp_tu,
-            "pa": partial(vocabulary_complexity.pa, language="fr"),
-            "nlm": vocabulary_complexity.nlm,
-            "uni_gram_lem": partial(vocabulary_complexity.uni_gram_lem, language="fr"),
-            "msttr": lexical_diversity.mean_sequential_ttr,
-            "mattr": lexical_diversity.measure_textual_lexical_diversity,
-            "mtld": lexical_diversity.measure_textual_lexical_diversity,
-            "fk_ease": readability.fk_ease,
-            "bingui": readability.bingui,
-            "km_score": readability.km_formula,
-        }
-
-        all_metrics = list(metrics_call.keys())
-
-        if metrics == "all":
-            metrics = all_metrics
-        elif isinstance(metrics, str):
-            metrics = [metrics]
-        elif metrics is None:
-            metrics = []
-
         sp_object = self.tagger(text)
-        metrics_scores = pd.DataFrame(np.zeros((1, len(all_metrics))), columns=all_metrics)
-        for metric in metrics:
-            metrics_scores[metric][0] = metrics_call[metric](sp_object)
+        scores: dict[str, float] = dict.fromkeys(METRICS, 0.0)
+        scores.update({metric: METRICS[metric](sp_object) for metric in selected_metrics})
 
+        biber_names = list(biberpy.dimnames.values())
         if with_biberpy:
-            biber = biberpy.getbiberdims(text)
-            metrics_scores = metrics_scores.assign(**biber)
-            metrics = [*metrics, *list(biberpy.dimnames.values())]
+            scores.update(biberpy.getbiberdims(text))
+            selected_metrics = [*selected_metrics, *biber_names]
         else:
-            for metric in biberpy.dimnames.values():
-                metrics_scores[metric] = 0
+            scores.update(dict.fromkeys(biber_names, 0.0))
 
-        if self.scaler:
-            scaled_metrics_scores = pd.DataFrame(
-                self.scaler.transform(metrics_scores[sorted(metrics_scores.columns)]),
-                columns=sorted(metrics_scores.columns),
-            )
-            metrics_scores = scaled_metrics_scores
-        return metrics_scores[sorted(metrics)]
+        columns = sorted(scores)
+        metrics_scores = pd.DataFrame([[scores[column] for column in columns]], columns=columns, dtype=np.float64)
+        if self.scaler is not None:
+            metrics_scores = pd.DataFrame(self.scaler.transform(metrics_scores), columns=columns)
+        return metrics_scores[sorted(selected_metrics)]
 
     def get_sp_object(self, text: str) -> Doc:
-        """
-        Getter of the spaCy object
-        Args:
-            text (string): text that will be computed
-
-        Returns:
-            spacy.tokens.doc.Doc: the spaCy object
-        """
+        """Return the spaCy document of the cleaned text."""
         return self.tagger(clean_text(text))
 
-    def compute(self, text: str):
-        """
-        Compute the text and evaluate the global difficulty level
+    def compute(self, text: str) -> np.ndarray:
+        """Estimate the difficulty level of a text.
+
         Args:
-            text (string): text that will be computed
+            text: Text to compute.
 
         Returns:
-            int: estimation of the level of difficulty
+            A one-element array with the estimated difficulty level.
         """
         return self.model.predict(self.get_metrics_scores(text))

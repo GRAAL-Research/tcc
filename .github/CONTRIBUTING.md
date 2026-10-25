@@ -1,4 +1,4 @@
-# Contributing to Deeparse
+# Contributing to TextComplexityComputer
 We love your input! We want to make contributing to this project as easy and transparent as possible, whether it's:
 
 - Reporting a bug
@@ -13,15 +13,15 @@ We use github to host code, to track issues and feature requests, as well as acc
 ## We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), So All Code Changes Happen Through Pull Requests
 Pull requests are the best way to propose changes to the codebase. We actively welcome your pull requests:
 
-1. Fork the repo and create your branch from the **`dev` branch**.
+1. Fork the repo and create your branch from `main`.
 2. If you've added code that should be tested, you **must** ensure it is properly tested.
 3. If you've changed APIs, update the documentation.
-4. Ensure the Travis test suite passes.
-5. Make sure your code lints.
+4. Ensure the CI passes (formatting, linting, type checking and tests).
+5. Add an entry to the `dev` section of `CHANGELOG.md`.
 6. Submit that pull request!
 
-## Any contributions you make will be under the LGPLv3 Software License
-In short, when you submit code changes, your submissions are understood to be under the same [LGPLv3 License](https://choosealicense.com/licenses/lgpl-3.0/) that covers the project. Feel free to contact the maintainers if that's a concern.
+## Any contributions you make will be under the GPLv3 Software License
+In short, when you submit code changes, your submissions are understood to be under the same [GPLv3 License](https://choosealicense.com/licenses/gpl-3.0/) that covers the project. Feel free to contact the maintainers if that's a concern.
 
 ## Write bug reports with detail, background, and sample code
 
@@ -58,77 +58,61 @@ When creating your enhancement request, please:
 * Include code examples to demonstrate how the enhancement would be used.
 
 
-## Prerequisites
+## Development environment
 
-We created three requirements files to install all the tools used for the development of the library. `tests/requirements.txt` define the requirements for the tests, `styling_requirements.txt` for the styling and `docs/requirements.txt` for the documentation.
+The project uses [uv](https://docs.astral.sh/uv/). The following command creates the virtual environment with the
+library, the development tools and the spaCy model:
 
-You can install all the requirements with
-
-``` shell
-pip install -r tests/requirements.txt
-pip install -r styling_requirements.txt
-pip install -r docs/requirements.txt
+```shell
+uv sync
 ```
 
-Also, you should run `python setup.py develop` to build the project and be able to build the documentation.
-``` shell
-python setup.py develop
-```
+## Coding style
 
-## Use a Consistent Coding Style
+The code is formatted and linted with [ruff](https://docs.astral.sh/ruff/) and type checked with
+[mypy](https://mypy.readthedocs.io) in strict mode, as configured in `pyproject.toml`:
 
-All of the code is formatted using [black](https://black.readthedocs.io) with the associated [config file](https://github.com/GRAAL-Research/tcc/blob/main/pyproject.toml). In order to format the code of your submission, simply run
-> See the [styling requirements](https://github.com/GRAAL-Research/tcc/blob/main/styling_requirements.txt) for the proper black version to use.
-
-``` shell
-black .
+```shell
+uv run ruff format .
+uv run ruff check .
+uv run mypy
 ```
 
 ## Tests
 
-If your pull request introduces a new feature, please deliver it with tests that ensure correct behavior. All of the current tests are located under the `tests` folder, if you want to see some examples.
+If your pull request introduces a new feature, deliver it with tests that ensure the correct behavior. The tests are
+located under the `tests` folder. **All** the tests must pass:
 
-For any pull request submitted, **ALL** of the tests must succeed. You can run the tests with
-
-``` shell
-python -m unittest
+```shell
+uv run pytest
 ```
 
-> The integration tests need to be executed on a device with a GPU.
+The CI runs them on Linux, Windows and macOS with Python 3.11 to 3.14, and on Python 3.11 with the lowest supported
+dependency versions.
 
-We also provide a script, `run_tests_python_envs.sh`, to run all the tests in all the supported versions. To do so, you need to install Conda and run
-the following command
+`tests/test_reference_scores.py` compares the metrics and predictions with reference values computed in the
+environment the model was trained in. A change in these values means the features fed to the model changed: it must
+be deliberate and explained in the pull request.
 
-``` shell
-bash -l run_tests_python_envs.sh # For bash terminal
-zsh -i run_tests_python_envs.sh # For ZSH terminal
-```
+## Bundled model
+
+The classifier and the scalers are stored as numpy arrays in `text_complexity_computer/resources/fr/*.npz`. They were
+exported from the original scikit-learn 1.3.2 pickles with `scripts/export_models.py`; the inference code lives in
+`text_complexity_computer/models.py`.
 
 ## Documentation
 
-When submitting a pull request for a new feature, try to include documentation for the new objects/modules introduced and their public methods.
-
- All of TCC's html documentation is automatically generated from the Python files' documentation. To have a preview of what the final html will look like with your modifications, first start by rebuilding the html pages.
-
- ``` shell
-cd docs
-./rebuild_html_doc.sh
- ```
-
-You can then see the local html files in your favorite browser. Here is an example using Firefox:
-
-``` shell
-firefox _build/html/index.html
-```
-
-or using Python
+The documentation is built with [MkDocs](https://www.mkdocs.org) from the `docs` folder and the docstrings
+(Google style). To preview it:
 
 ```shell
-python -m http.server -d _build/html/
+uv run --group docs mkdocs serve
 ```
 
+It is deployed to GitHub Pages on every push to `main`.
+
 ## License
-By contributing, you agree that your contributions will be licensed under its LGPLv3 License.
+By contributing, you agree that your contributions will be licensed under its GPLv3 License.
 
 ## References
 This document was adapted from the open-source contribution guidelines for [Facebook's Draft](https://github.com/facebook/draft-js/blob/a9316a723f9e918afde44dea68b5f9f39b7d9b00/CONTRIBUTING.md).

@@ -1,34 +1,20 @@
-# -*- coding: utf-8 -*-
 import re
-from typing import Union, Tuple, List
+from collections.abc import Iterable
 
 from spacy.tokens import Doc, Token
 
 
-def get_num_words(
-    sp_object: Union[Doc, List[Token]],
-    min_size: int = 0,
-    get_size: bool = False,
-    get_unique: bool = False,
-    without_stop: bool = False,
-) -> Union[int, Tuple[int, int]]:
-    """
-    Get the number of real words (not punctuation or quotes)
+def get_filtered_words(sp_object: Iterable[Token], min_size: int = 0, without_stop: bool = False) -> list[str]:
+    """Return the lowercased real words (not punctuation nor words with an apostrophe).
 
     Args:
-        sp_object (Union[spacy.tokens.doc.Doc, list[spacy.tokens.token.Token]]): spaCy object (in case of the Doc type)
-            or list of spaCy tokens (in case of the list of Token type) based on the text that will be computed.
-        min_size (int, optional): minimum size of the word to be taken account of (Default at 0).
-        get_size (bool, optional): get the number of letter in the real words (Default at False).
-        get_unique (bool, optional): get the number of unique words (Default at False).
-        without_stop (bool, optional): don't count stopwords (Default at False).
-
-    Returns:
-        int: the number of real words
+        sp_object: spaCy document, span or list of tokens of the text.
+        min_size: Minimum number of letters of a word to keep it.
+        without_stop: Whether to drop the stopwords.
 
     Original author: Nicolas Garneau
     """
-    filtered_words = [
+    return [
         word.text.lower()
         for word in sp_object
         if not word.is_punct
@@ -36,52 +22,53 @@ def get_num_words(
         and len(word.text) >= min_size
         and (not word.is_stop or not without_stop)
     ]
-    if get_size:
-        size = len("".join(filtered_words))
-        return len(filtered_words), size
-    if get_unique:
-        return len(filtered_words), len(set(filtered_words))
-    return len(filtered_words)
+
+
+def get_num_words(sp_object: Iterable[Token], min_size: int = 0, without_stop: bool = False) -> int:
+    """Return the number of real words (not punctuation nor words with an apostrophe).
+
+    Args:
+        sp_object: spaCy document, span or list of tokens of the text.
+        min_size: Minimum number of letters of a word to count it.
+        without_stop: Whether to ignore the stopwords.
+
+    Original author: Nicolas Garneau
+    """
+    return len(get_filtered_words(sp_object, min_size=min_size, without_stop=without_stop))
+
+
+def get_num_words_and_letters(sp_object: Iterable[Token]) -> tuple[int, int]:
+    """Return the number of real words and their total number of letters."""
+    words = get_filtered_words(sp_object)
+    return len(words), len("".join(words))
+
+
+def get_num_words_and_unique_words(sp_object: Iterable[Token], without_stop: bool = False) -> tuple[int, int]:
+    """Return the number of real words and of unique real words."""
+    words = get_filtered_words(sp_object, without_stop=without_stop)
+    return len(words), len(set(words))
 
 
 def get_num_sentences(sp_object: Doc) -> int:
-    """
-    Get the number of sentences
-
-    Args:
-        sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
-
-    Returns:
-        int: the number of sentences
+    """Return the number of sentences, ignoring the segments ending with a comma.
 
     Original author: Nicolas Garneau
     """
-    real_sentences = [sentences for sentences in sp_object.sents if sentences.text[-1] not in [","]]
-    return len(real_sentences)
+    return sum(1 for sentence in sp_object.sents if sentence.text[-1] != ",")
 
 
 def syllables_estimate(string: str) -> int:
-    """
-    Estimate the syllables.
-    """
+    """Estimate the number of syllables as the number of vowel groups."""
     return len(re.findall(r"[aeiouyœéèëêîïôûüùâàô]+", string))
 
 
-def get_num_syllables(sp_object: Union[Doc, Token]) -> int:
-    """
-    Get the number of syllables
+def get_num_syllables(sp_object: Doc | Token) -> int:
+    """Return the number of syllables of a document or a single token.
 
-    Args:
-        sp_object (Union[spacy.tokens.doc.Doc, spacy.tokens.token.Token]): spaCy object based on the text
-    (in case of the Doc type) or on the word (in case of the Token type) that will be computed.
-
-    Returns:
-        int: the number of syllables
+    Punctuation and words with an apostrophe are ignored.
 
     Original author: Nicolas Garneau
     """
-
-    # In the case where only a word spaCy object (spacy.tokens.token.Token) is passed.
     if isinstance(sp_object, Token):
         if not sp_object.is_punct and "'" not in sp_object.text:
             return syllables_estimate(sp_object.text)
@@ -91,17 +78,8 @@ def get_num_syllables(sp_object: Union[Doc, Token]) -> int:
     return syllables_estimate(" ".join(filtered_words))
 
 
-def safe_divide(x: Union[int, float], y: Union[int, float], returned_value: Union[int, float] = 0.0) -> float:
-    """Safe divide x/y
-
-    Args:
-        x (Union[int, float]): denominator
-        y (Union[int, float]): numerator
-        returned_value (Union[int, float], optional): returned number if y = 0
-
-    Returns:
-        float: x/y or returns value (default at 0.0) if y = 0
-    """
+def safe_divide(x: float, y: float, returned_value: float = 0.0) -> float:
+    """Return ``x / y``, or ``returned_value`` when ``y`` is 0."""
     if y == 0:
         return returned_value
     return x / y

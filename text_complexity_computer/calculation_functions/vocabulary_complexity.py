@@ -1,13 +1,22 @@
-# -*- coding: utf-8 -*-
-
 import json
-import os
-import pkgutil
+from functools import cache
 from math import log
 
 from spacy.tokens import Doc
 
-from .metrics_utils import get_num_words, safe_divide
+from ..tools import resource_path
+from .metrics_utils import get_num_words, get_num_words_and_letters, safe_divide
+
+
+@cache
+def _easy_words(language: str) -> str:
+    return resource_path(language, "easy_words.txt").read_text(encoding="utf-8")
+
+
+@cache
+def _word_frequencies(language: str) -> dict[str, float]:
+    frequencies: dict[str, float] = json.loads(resource_path(language, "word_frequencies.json").read_text("utf-8"))
+    return frequencies
 
 
 def pa(sp_object: Doc, language: str) -> float:
@@ -21,13 +30,9 @@ def pa(sp_object: Doc, language: str) -> float:
     Returns:
         float: The average number of word not in a reference list.
     """
-    data = pkgutil.get_data(__name__, os.path.join("../resources", language, "easy_words.txt"))
-    utf8data = data.decode("utf-8")
-
-    count = 0
-    for token in sp_object:
-        if token.lemma_ not in utf8data:
-            count += 1
+    # Substring lookup in the raw file content, as done when the bundled model was trained.
+    easy_words = _easy_words(language)
+    count = sum(1 for token in sp_object if token.lemma_ not in easy_words)
     return safe_divide(count, get_num_words(sp_object))
 
 
@@ -41,11 +46,11 @@ def nlm(sp_object: Doc) -> float:
     Returns:
         float: average size of words
     """
-    num_word, num_letter = get_num_words(sp_object, get_size=True)
+    num_word, num_letter = get_num_words_and_letters(sp_object)
     return safe_divide(num_letter, num_word)
 
 
-def nmm_8(sp_object) -> float:
+def nmm_8(sp_object: Doc) -> float:
     """
     Average number of words with more than 8 letters (NMM_8)
 
@@ -71,18 +76,12 @@ def uni_gram_lem(sp_object: Doc, language: str) -> float:
     Returns:
         float: the average probability value of words according to a frequency list.
     """
-    normalized_prob = 0
-    data = pkgutil.get_data(__name__, os.path.join("../resources", language, "word_frequencies.json"))
-    lexique_dic = json.loads(data.decode())
-    lexique_keys = list(lexique_dic.keys())
+    normalized_prob = 0.0
+    lexique_dic = _word_frequencies(language)
 
     for token in sp_object:
-        if token.lemma_ not in lexique_keys:
-            normalized_prob -= 10  # the lowest probability of all the list
-        else:
-            if lexique_dic[token.lemma_] <= 0:
-                normalized_prob -= 10  # the lowest probability of all the list
-            else:
-                normalized_prob += log(lexique_dic[token.lemma_])
+        frequency = lexique_dic.get(token.lemma_, 0)
+        # Unknown or null frequency words get the lowest log probability of the list.
+        normalized_prob += log(frequency) if frequency > 0 else -10
 
     return safe_divide(normalized_prob, get_num_words(sp_object))

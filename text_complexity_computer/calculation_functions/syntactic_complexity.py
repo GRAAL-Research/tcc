@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
-from typing import Union, Tuple
-
 import numpy as np
 from spacy.tokens import Doc, Token
 
 from .metrics_utils import get_num_sentences, get_num_words, safe_divide
+
+DEPENDENT_CLAUSE_DEPS = ("conj", "ccomp", "orphan", "advcl")
 
 
 def mean_length_sentences(sp_object: Doc) -> float:
@@ -43,7 +41,7 @@ def nws_90(sp_object: Doc) -> int:
     return get_num_words(list(sp_object.sents)[rank])
 
 
-def ps_30(sp_object: Doc):
+def ps_30(sp_object: Doc) -> float:
     """
     Percentage of sentences longer than 30 words (PS_30)
 
@@ -58,7 +56,8 @@ def ps_30(sp_object: Doc):
 
 
 # ==================== I - T-UNITS ==================== #
-def check_if_complex(sp_root_token: Token):
+def check_if_complex(sp_root_token: Token) -> bool:
+    """Return whether a subordinate clause depends, directly or not, on the token."""
     for child in sp_root_token.children:
         # Subordinate in the children of the root
         if child.dep_[:3] == "acl" or child.dep_ in ["ccomp", "orphan", "advcl"]:
@@ -68,8 +67,8 @@ def check_if_complex(sp_root_token: Token):
     return False
 
 
-def _get_t_units(sp_object: Doc, complex_count: bool = False) -> Union[int, Tuple[int, int]]:
-    """T-Units counter (_get_t_units)
+def _count_t_units(sp_object: Doc) -> tuple[int, int]:
+    """Count the T-units and the complex T-units.
 
     "The following elements were counted as one T-unit: a single clause, a matrix plus subordinate clause, two or more
     phrases in apposition, and fragments of clauses produced by ellipsis. Coordinate clauses were counted as two
@@ -77,12 +76,10 @@ def _get_t_units(sp_object: Doc, complex_count: bool = False) -> Union[int, Tupl
     markers such as okay, thanks or good. False starts were integrated into the following t-unit." (Young 1995:38)
 
     Args:
-        sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
-        complex_count (bool, optional): search for Complex T-Unit (Default at False).
+        sp_object: spaCy document of the text.
 
     Returns:
-        int: the number of T-Units if complex_count=False
-        Tuple[int, int]: the number of T-Units and Complex T-Unit if complex_count=True
+        The number of T-units and the number of complex T-units.
     """
     # At least one T-unit per sentence
     t_unit_count = get_num_sentences(sp_object)
@@ -94,16 +91,17 @@ def _get_t_units(sp_object: Doc, complex_count: bool = False) -> Union[int, Tupl
             # The coordinate clauses are counted as separate T-Units. (see Docstring for more)
             if token.dep_ == "conj":
                 t_unit_count += 1
-            if complex_count:
-                if token.dep_ == "ROOT":
-                    complex_t_unit_pres = check_if_complex(token)
-        if complex_count:
-            if complex_t_unit_pres:
-                complex_t_unit_count += 1
+            if token.dep_ == "ROOT":
+                complex_t_unit_pres = check_if_complex(token)
+        if complex_t_unit_pres:
+            complex_t_unit_count += 1
 
-    if complex_count:
-        return t_unit_count, complex_t_unit_count
-    return t_unit_count
+    return t_unit_count, complex_t_unit_count
+
+
+def _get_t_units(sp_object: Doc) -> int:
+    """Count the T-units (see :func:`_count_t_units`)."""
+    return _count_t_units(sp_object)[0]
 
 
 def mean_length_tunit(sp_object: Doc) -> float:
@@ -143,7 +141,7 @@ def ctu_tu(sp_object: Doc) -> float:
     Returns:
         float: the average number of Complex T-Units per T-Unit
     """
-    tu, ctu = _get_t_units(sp_object, complex_count=True)
+    tu, ctu = _count_t_units(sp_object)
     return safe_divide(ctu, tu)
 
 
@@ -151,34 +149,23 @@ def ctu_tu(sp_object: Doc) -> float:
 
 
 # ==================== II - CLAUSES ==================== #
-def _get_clauses(sp_object: Doc, dependent_count: bool = False) -> Union[int, Tuple[int, int]]:
-    """
-    Clauses Counter (_get_clauses)
+def _count_clauses(sp_object: Doc) -> tuple[int, int]:
+    """Count the clauses and the dependent clauses.
 
     Args:
-        sp_object (spacy.tokens.doc.Doc): spaCy object based on the text that will be computed.
-        dependent_count (bool, optional): search for Dependent Clauses (Default at False).
+        sp_object: spaCy document of the text.
 
     Returns:
-        int: the number of Clauses if dependent_count=False
-        Tuple[int, int]: the number of Clauses and Dependent Clauses if dependent_count=True
+        The number of clauses and the number of dependent clauses.
     """
-    clause_count = get_num_sentences(sp_object)
-    dc_count = 0
+    dc_count = sum(1 for token in sp_object if token.dep_[:3] == "acl" or token.dep_ in DEPENDENT_CLAUSE_DEPS)
+    # At least one clause per sentence
+    return get_num_sentences(sp_object) + dc_count, dc_count
 
-    for token in sp_object:
-        if token.dep_[:3] == "acl" or token.dep_ in [
-            "conj",
-            "ccomp",
-            "orphan",
-            "advcl",
-        ]:
-            clause_count += 1
-            if dependent_count:
-                dc_count += 1
-    if dependent_count:
-        return clause_count, dc_count
-    return clause_count
+
+def _get_clauses(sp_object: Doc) -> int:
+    """Count the clauses (see :func:`_count_clauses`)."""
+    return _count_clauses(sp_object)[0]
 
 
 def dc_c(sp_object: Doc) -> float:
@@ -191,7 +178,7 @@ def dc_c(sp_object: Doc) -> float:
     Returns:
         float: the average number of Dependent Clauses per Clause
     """
-    clause_count, dc_count = _get_clauses(sp_object, dependent_count=True)
+    clause_count, dc_count = _count_clauses(sp_object)
     return safe_divide(dc_count, clause_count)
 
 

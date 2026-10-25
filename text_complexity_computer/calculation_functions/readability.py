@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
-
 import re
 
 from spacy.tokens import Doc
 
 from .metrics_utils import (
-    get_num_words,
     get_num_sentences,
     get_num_syllables,
+    get_num_words,
     safe_divide,
 )
 from .syntactic_complexity import mean_length_sentences
@@ -42,7 +40,7 @@ def fk_ease(sp_object: Doc) -> float:
     num_words = get_num_words(sp_object)
     num_syllables = get_num_syllables(sp_object)
     if num_sentences == 0 or num_words == 0 or num_syllables == 0:
-        return 0
+        return 0.0
     words_per_sent = num_words / num_sentences
     syllables_per_word = num_syllables / num_words
     # The formula below was proposed by Flesch and Kincaid (1948)
