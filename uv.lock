@@ -2132,9 +2132,9 @@ docs = [
 requires-dist = [
     { name = "numpy", specifier = ">=1.26" },
     { name = "pandas", specifier = ">=2.1" },
-    { name = "preshed", specifier = "!=3.0.14" },
+    { name = "preshed", specifier = ">=3.0.9,!=3.0.14" },
     { name = "pyahocorasick", specifier = ">=2.1" },
-    { name = "spacy", specifier = ">=3.8.2,<4" },
+    { name = "spacy", specifier = ">=3.8.15,<4" },
 ]
 
 [package.metadata.requires-dev]

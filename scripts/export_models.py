@@ -22,7 +22,7 @@ OUTPUT_DIR = Path(__file__).resolve().parents[1] / "text_complexity_computer" / 
 
 def _load(path: Path) -> object:
     with path.open("rb") as file:
-        return pickle.load(file)  # noqa: S301 - trusted files from this repository
+        return pickle.load(file)
 
 
 def export_forest(pickle_path: Path, output_path: Path) -> None:
@@ -56,9 +56,13 @@ def export_scaler(pickle_path: Path, output_path: Path) -> None:
     scaler = _load(pickle_path)
     feature_names = np.asarray(scaler.feature_names_in_, dtype=str)
     if type(scaler).__name__ == "MinMaxScaler":
-        np.savez_compressed(output_path, kind="minmax", feature_names=feature_names, scale=scaler.scale_, min=scaler.min_)
+        np.savez_compressed(
+            output_path, kind="minmax", feature_names=feature_names, scale=scaler.scale_, min=scaler.min_
+        )
     else:
-        np.savez_compressed(output_path, kind="standard", feature_names=feature_names, mean=scaler.mean_, scale=scaler.scale_)
+        np.savez_compressed(
+            output_path, kind="standard", feature_names=feature_names, mean=scaler.mean_, scale=scaler.scale_
+        )
 
 
 def main() -> None:

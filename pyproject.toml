@@ -34,9 +34,9 @@ dependencies = [
     "numpy>=1.26",
     "pandas>=2.1",
     "pyahocorasick>=2.1",
-    "spacy>=3.8.2,<4",
+    "spacy>=3.8.15,<4",
     # preshed 3.0.14 breaks spaCy tokenizer loading: https://github.com/explosion/spaCy/issues/14058
-    "preshed!=3.0.14",
+    "preshed>=3.0.9,!=3.0.14",
 ]
 
 [project.urls]
