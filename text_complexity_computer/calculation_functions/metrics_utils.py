@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from spacy.tokens import Doc, Token
 
 
-def get_filtered_words(sp_object: Iterable[Token], min_size: int = 0, without_stop: bool = False) -> list[str]:
+def get_word_texts(sp_object: Iterable[Token], min_size: int = 0, without_stop: bool = False) -> list[str]:
     """Return the lowercased real words (not punctuation nor words with an apostrophe).
 
     Args:
@@ -34,18 +34,18 @@ def get_num_words(sp_object: Iterable[Token], min_size: int = 0, without_stop: b
 
     Original author: Nicolas Garneau
     """
-    return len(get_filtered_words(sp_object, min_size=min_size, without_stop=without_stop))
+    return len(get_word_texts(sp_object, min_size=min_size, without_stop=without_stop))
 
 
 def get_num_words_and_letters(sp_object: Iterable[Token]) -> tuple[int, int]:
     """Return the number of real words and their total number of letters."""
-    words = get_filtered_words(sp_object)
+    words = get_word_texts(sp_object)
     return len(words), len("".join(words))
 
 
 def get_num_words_and_unique_words(sp_object: Iterable[Token], without_stop: bool = False) -> tuple[int, int]:
     """Return the number of real words and of unique real words."""
-    words = get_filtered_words(sp_object, without_stop=without_stop)
+    words = get_word_texts(sp_object, without_stop=without_stop)
     return len(words), len(set(words))
 
 

@@ -58,3 +58,12 @@ def test_scaler_transforms_raw_reference_metrics(scaler: str) -> None:
     scaled = Scaler(resource_path("fr", f"fr_{scaler}.npz")).transform(raw)
 
     np.testing.assert_allclose(scaled, expected[raw.columns].to_numpy(), rtol=1e-12, atol=1e-12)
+
+
+@pytest.mark.parametrize("bad_value", [np.nan, np.inf])
+def test_predict_raises_on_non_finite_feature(model: RandomForestClassifier, bad_value: float) -> None:
+    features = _reference_features("MinMaxScaler")
+    features.loc[0, "mls"] = bad_value
+
+    with pytest.raises(ValueError, match="NaN or infinity"):
+        model.predict(features)

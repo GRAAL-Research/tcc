@@ -8,7 +8,12 @@
   dependency. Predictions match scikit-learn 1.3.2 exactly. `model` and `scaler` are now
   `text_complexity_computer.models` objects exposing `predict`, `predict_proba` and `transform`.
 - Require Python 3.11 or later and support Python 3.11 to 3.14.
-- Raise a `ValueError` on an unknown metric or scaler name.
+- Raise a `ValueError` on an unknown metric or scaler name, and on NaN or infinite features. `scaler=False` or `""`
+  still means no scaler.
+- Give install instructions when the spaCy model is missing and cannot be downloaded (e.g. uv environments without pip).
+- Accept any iterable of metric names (list, tuple, numpy array, pandas index) and compute MTLD once for `mtld` and
+  `mattr`.
+- Remove the generated `text_complexity_computer.version` module: use `text_complexity_computer.__version__`.
 - Split `get_num_words(get_size=True)` and `get_num_words(get_unique=True)` into `get_num_words_and_letters` and
   `get_num_words_and_unique_words`.
 - Exclude preshed 3.0.14, which breaks spaCy, and require spaCy 3.8.15 or later.

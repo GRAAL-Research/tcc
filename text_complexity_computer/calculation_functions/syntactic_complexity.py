@@ -100,8 +100,9 @@ def _count_t_units(sp_object: Doc) -> tuple[int, int]:
 
 
 def _get_t_units(sp_object: Doc) -> int:
-    """Count the T-units (see :func:`_count_t_units`)."""
-    return _count_t_units(sp_object)[0]
+    """Count the T-units (see :func:`_count_t_units`) without looking for complex ones."""
+    # At least one T-unit per sentence, plus one per coordinate clause.
+    return get_num_sentences(sp_object) + sum(1 for token in sp_object if token.dep_ == "conj")
 
 
 def mean_length_tunit(sp_object: Doc) -> float:

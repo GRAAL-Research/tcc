@@ -19,7 +19,10 @@ def _ordered_features(features: pd.DataFrame, feature_names: list[str]) -> np.nd
     missing = sorted(set(feature_names) - set(features.columns))
     if missing:
         raise ValueError(f"Missing features: {missing}.")
-    return features[feature_names].to_numpy(dtype=np.float64)
+    values = features[feature_names].to_numpy(dtype=np.float64)
+    if not np.isfinite(values).all():
+        raise ValueError("Input contains NaN or infinity.")
+    return values
 
 
 class Scaler:
