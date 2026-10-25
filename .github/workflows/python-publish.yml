@@ -3,6 +3,7 @@ name: Publish to PyPI
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -10,12 +11,13 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/text_complexity_computer/
+    permissions:
+      id-token: write # PyPI Trusted Publishing
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v10.3.2
       - run: uv build
-      - name: Publish
-        env:
-          UV_PUBLISH_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          UV_PUBLISH_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: uv publish
+      - run: uv publish --trusted-publishing always
