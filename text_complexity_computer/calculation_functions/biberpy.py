@@ -61,10 +61,16 @@ dimnames = {
     "P67": "analNegn",
 }
 
+# Module state set by configure() before computing the dimensions.
 language = None
 tag_list = None
 word_lists = None
 mwe_list = None
+
+
+def configure(language, word_lists, mwe_list, tag_list):  # pylint: disable=redefined-outer-name
+    """Set the language resources used to compute the Biber dimensions."""
+    globals().update(language=language, word_lists=word_lists, mwe_list=mwe_list, tag_list=tag_list)
 
 
 def word_at(w):

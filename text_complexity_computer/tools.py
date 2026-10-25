@@ -1,25 +1,34 @@
-# pylint: disable=c-extension-no-member, consider-using-set-comprehension
 import re
 import sys
-from typing import Dict, Tuple
+from importlib.resources.abc import Traversable
+from importlib.resources import files
 
 import ahocorasick
 
+WordLists = dict[str, set[str]]
+MweList = dict[str, ahocorasick.Automaton]
+TagList = dict[str, tuple[str, str, str, str]]
+
+
+def resource_path(language: str, file_name: str) -> Traversable:
+    """Return the path of a resource file bundled with the package."""
+    return files("text_complexity_computer").joinpath("resources", language, file_name)
+
 
 def clean_text(text: str) -> str:
-    """
-    Text cleaner
-    Below is a comprehensive list of changes:
-        - remove the bullet lists marker
-        - special characters
-        - add space between points
-        - remove space multiplications
+    """Clean a text before computing its metrics.
+
+    Changes made:
+
+    - remove the bullet list markers and some special characters
+    - add a space after points
+    - collapse repeated whitespaces
 
     Args:
-        text (string): text that will be computed
+        text: Text to clean.
 
     Returns:
-        string: cleaned text
+        The cleaned text.
     """
     text = text.replace("_", " ")
     text = text.replace("•", " ")
@@ -35,32 +44,29 @@ def clean_text(text: str) -> str:
     return text
 
 
-def read_word_lists(file_path: str, verbosity: int) -> Tuple[Dict, Dict]:
+def read_word_lists(file_path: Traversable, verbosity: int) -> tuple[WordLists, MweList]:
+    """Read word lists in the format ``firstPersonPronouns = I,we,me,us,my,our,myself,ourselves``.
+
+    Returns:
+        The word lists and, for the lists holding multi-word expressions, an Aho-Corasick automaton to find them.
     """
-    Reads lists in the format: `"firstPersonPronouns = I,we,me,us,my,our,myself,ourselves"`
-    """
-    word_lists = {}
-    mwe_list = {}
-    with open(file_path, "r", encoding="utf8") as file:
-        for i, line in enumerate(file.readlines()):
-            x = line.strip().split(" = ")
-            if len(x) == 2:
-                values = x[1].split(",")
-                word_lists[x[0]] = set([w.strip() for w in values])
-                A = ahocorasick.Automaton()  # separately add an automaton structure for finding MWEs
-                mwecur = []
-                for mwe in values:
-                    mwe = mwe.strip()
-                    if mwe.find(" ") > 0:
-                        mwecur.append(mwe.lower())
-                if len(mwecur) > 0:
-                    for idx, key in enumerate(set(mwecur)):
-                        A.add_word(key, (idx, key))
-                    A.make_automaton()
-                    mwe_list[x[0]] = A
-            else:
-                if verbosity > 0 and len(line) > 1:
-                    print(f"Error in line {i}, {line}", file=sys.stderr)
+    word_lists: WordLists = {}
+    mwe_list: MweList = {}
+    lines = file_path.read_text(encoding="utf8").splitlines(keepends=True)
+    for i, line in enumerate(lines):
+        x = line.strip().split(" = ")
+        if len(x) == 2:
+            values = x[1].split(",")
+            word_lists[x[0]] = {w.strip() for w in values}
+            mwecur = [mwe.strip().lower() for mwe in values if mwe.strip().find(" ") > 0]
+            if mwecur:
+                automaton = ahocorasick.Automaton()
+                for idx, key in enumerate(set(mwecur)):
+                    automaton.add_word(key, (idx, key))
+                automaton.make_automaton()
+                mwe_list[x[0]] = automaton
+        elif verbosity > 0 and len(line) > 1:
+            print(f"Error in line {i}, {line}", file=sys.stderr)
     if verbosity > 1:
         print(f"Read total {len(word_lists)} classes", file=sys.stderr)
         print(sorted(word_lists.keys()), file=sys.stderr)
@@ -73,15 +79,14 @@ def read_word_lists(file_path: str, verbosity: int) -> Tuple[Dict, Dict]:
     return word_lists, mwe_list
 
 
-def read_num_list(file_path: str) -> Dict:
+def read_num_list(file_path: Traversable) -> TagList:
+    """Read a num file in the format ``1625260 years year NOUN Number=Plur``.
+
+    This produces a "most frequent tag" substitute for tagging.
     """
-    Reads a numfile in the format: `"1625260 years year NOUN Number=Plur"`.
-    This produces a "most frequent tag" substitute for tagging
-    """
-    tag_list = {}
-    with open(file_path, "r", encoding="utf8") as file:
-        for line in file.readlines():
-            x = line.rstrip().split()
-            if len(x) == 5 and not x[1] in tag_list:
-                tag_list[x[1].lower()] = (x[0], x[2], x[3], x[4])
+    tag_list: TagList = {}
+    for line in file_path.read_text(encoding="utf8").splitlines():
+        x = line.rstrip().split()
+        if len(x) == 5 and x[1] not in tag_list:
+            tag_list[x[1].lower()] = (x[0], x[2], x[3], x[4])
     return tag_list
