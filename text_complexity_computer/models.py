@@ -78,4 +78,4 @@ class RandomForestClassifier:
 
     def predict(self, features: pd.DataFrame) -> np.ndarray:
         """Return the most probable class of each row of ``features``."""
-        return self.classes_[np.argmax(self.predict_proba(features), axis=1)]
+        return np.asarray(self.classes_[np.argmax(self.predict_proba(features), axis=1)])
