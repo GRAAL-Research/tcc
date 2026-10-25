@@ -15,6 +15,7 @@
 - Move the packaging to `pyproject.toml` (hatchling, uv), replace black and pylint by ruff, add mypy and `py.typed`.
 - Add reference tests that freeze the metrics and predictions.
 - New documentation site built with MkDocs.
+- Declare the GPLv3 license, consistent with `LICENSE.txt` and the biberpy module (previously declared as LGPLv3).
 
 ## 0.2
 

@@ -8,7 +8,7 @@ version = "0.3.0"
 description = "Assess the complexity of French texts."
 readme = "README.md"
 requires-python = ">=3.11"
-license = "LGPL-3.0-only"
+license = "GPL-3.0-only"
 license-files = ["LICENSE.txt"]
 authors = [{ name = "le-smog", email = "le-smog@gmx.com" }]
 maintainers = [{ name = "David Beauchemin" }]

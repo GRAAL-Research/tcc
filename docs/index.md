@@ -66,5 +66,5 @@ a one-row `pandas.DataFrame`. See [Usage](usage.md) for the available metrics an
 
 ## License
 
-TCC is licensed under the [LGPLv3](https://github.com/GRAAL-Research/tcc/blob/main/LICENSE.txt). The Biber
-dimensions module is adapted from [biberpy](https://github.com/ssharoff/biberpy) by Serge Sharoff (GPLv3).
+TCC is licensed under the [GPLv3](https://github.com/GRAAL-Research/tcc/blob/main/LICENSE.txt). The Biber
+dimensions module is adapted from [biberpy](https://github.com/ssharoff/biberpy) by Serge Sharoff, also under the GPLv3.
