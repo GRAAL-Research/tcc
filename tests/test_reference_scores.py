@@ -20,10 +20,9 @@ TEXT_NAMES = list(REFERENCE["texts"])
 @pytest.fixture(scope="module", params=SCALERS)
 def tcc_and_scaler(request: pytest.FixtureRequest) -> tuple[TextComplexityComputer, str]:
     scaler = None if request.param == "None" else request.param
-    with pytest.warns(UserWarning) if scaler is None else nullcontext():
+    with pytest.warns(UserWarning, match="without scaler") if scaler is None else nullcontext():
         tcc = TextComplexityComputer(scaler=scaler)
     return tcc, request.param
-
 
 
 @pytest.mark.parametrize("text_name", TEXT_NAMES)

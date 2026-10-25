@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-from typing import Union, List
+from collections.abc import Iterable, Sequence
 
 from spacy.tokens import Doc, Token
 
-from .metrics_utils import get_num_words, safe_divide
+from .metrics_utils import get_num_words, get_num_words_and_unique_words, safe_divide
 
 
-def get_filtered_words(sp_object: Doc, without_stop: bool = False) -> List[Token]:
+def get_filtered_words(sp_object: Doc, without_stop: bool = False) -> list[Token]:
     """Get a list of all filtered words. What is defined here as filtered is without punctuations and without stopwords.
 
     Args:
@@ -14,7 +13,7 @@ def get_filtered_words(sp_object: Doc, without_stop: bool = False) -> List[Token
         without_stop (bool, optional): does not take into account stopwords. (Default to False)
 
     Returns:
-        List[spacy.tokens.token.Token]: the list of filtered words as spaCy token.
+        list[spacy.tokens.token.Token]: the list of filtered words as spaCy token.
     """
     return [
         word
@@ -23,7 +22,7 @@ def get_filtered_words(sp_object: Doc, without_stop: bool = False) -> List[Token
     ]
 
 
-def type_token_ratio(sp_object: Union[Doc, List[Token]]) -> float:
+def type_token_ratio(sp_object: Iterable[Token]) -> float:
     """
     Type-Token Ratio (TTR) (Templin et al., 1957)
 
@@ -34,7 +33,7 @@ def type_token_ratio(sp_object: Union[Doc, List[Token]]) -> float:
         float: the TTR
 
     """
-    num_words, num_unique_words = get_num_words(sp_object, get_unique=True, without_stop=True)
+    num_words, num_unique_words = get_num_words_and_unique_words(sp_object, without_stop=True)
     return safe_divide(num_unique_words, num_words)
 
 
@@ -79,8 +78,9 @@ def moving_average_ttr(sp_object: Doc, window_size: int = 100) -> float:
     return safe_divide(sum(wttr), len(wttr))
 
 
-def measure_textual_lexical_diversity_unidir(sp_object):
-    ttr_unidir = 0
+def measure_textual_lexical_diversity_unidir(sp_object: Sequence[Token]) -> float:
+    """One-directional MTLD pass over a sequence of tokens."""
+    ttr_unidir = 0.0
     word_bank = set()
     count = 0
     t = 0
@@ -89,13 +89,12 @@ def measure_textual_lexical_diversity_unidir(sp_object):
         if word.text not in word_bank:
             word_bank.add(word.text)
             t += 1
-        else:
-            # The TTR equilibrium point (at 0.720) is described by P.M. McCarthy et al, 2010
-            if t / count <= 0.72 and count >= 10:
-                ttr_unidir += 1
-                word_bank = set()
-                t = 0
-                count = 0
+        # The TTR equilibrium point (at 0.720) is described by P.M. McCarthy et al, 2010
+        elif t / count <= 0.72 and count >= 10:
+            ttr_unidir += 1
+            word_bank = set()
+            t = 0
+            count = 0
     ttr_unidir += (1 - safe_divide(t, count, returned_value=1)) / 0.28  # 1-0.72
     return safe_divide(get_num_words(sp_object), ttr_unidir)
 

@@ -6,7 +6,7 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 import spacy
-from spacy.cli import download
+from spacy.cli.download import download
 from spacy.language import Language
 from spacy.tokens import Doc
 

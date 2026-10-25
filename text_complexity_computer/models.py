@@ -15,11 +15,11 @@ def _load_npz(path: Traversable) -> dict[str, np.ndarray]:
         return {key: data[key] for key in data.files}
 
 
-def _ordered_features(X: pd.DataFrame, feature_names: list[str]) -> np.ndarray:
-    missing = sorted(set(feature_names) - set(X.columns))
+def _ordered_features(features: pd.DataFrame, feature_names: list[str]) -> np.ndarray:
+    missing = sorted(set(feature_names) - set(features.columns))
     if missing:
         raise ValueError(f"Missing features: {missing}.")
-    return X[feature_names].to_numpy(dtype=np.float64)
+    return features[feature_names].to_numpy(dtype=np.float64)
 
 
 class Scaler:
@@ -32,12 +32,12 @@ class Scaler:
         self.scale_ = arrays["scale"]
         self.offset_ = arrays["min"] if self.kind == "minmax" else arrays["mean"]
 
-    def transform(self, X: pd.DataFrame) -> np.ndarray:
-        """Scale the features of ``X``, matched by column name."""
-        values = _ordered_features(X, list(self.feature_names_in_))
+    def transform(self, features: pd.DataFrame) -> np.ndarray:
+        """Scale the ``features``, matched by column name."""
+        values = _ordered_features(features, list(self.feature_names_in_))
         if self.kind == "minmax":
-            return values * self.scale_ + self.offset_
-        return (values - self.offset_) / self.scale_
+            return np.asarray(values * self.scale_ + self.offset_)
+        return np.asarray((values - self.offset_) / self.scale_)
 
 
 class RandomForestClassifier:
@@ -58,9 +58,9 @@ class RandomForestClassifier:
         self._leaf_proba = arrays["leaf_proba"]
         self._max_depth = int(arrays["max_depth"])
 
-    def _leaves(self, X: pd.DataFrame) -> np.ndarray:
+    def _leaves(self, features: pd.DataFrame) -> np.ndarray:
         # scikit-learn casts the features to float32 before comparing them with the float64 thresholds.
-        values = _ordered_features(X, list(self.feature_names_in_)).astype(np.float32).astype(np.float64)
+        values = _ordered_features(features, list(self.feature_names_in_)).astype(np.float32).astype(np.float64)
         nodes = np.broadcast_to(self._roots, (values.shape[0], self._roots.shape[0])).copy()
         rows = np.arange(values.shape[0])[:, np.newaxis]
         for _ in range(self._max_depth):
@@ -72,10 +72,10 @@ class RandomForestClassifier:
             nodes = np.where(is_leaf, nodes, next_nodes)
         return nodes
 
-    def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+    def predict_proba(self, features: pd.DataFrame) -> np.ndarray:
         """Return the class probabilities, averaged over the trees."""
-        return self._leaf_proba[self._leaves(X)].sum(axis=1) / self._roots.shape[0]
+        return np.asarray(self._leaf_proba[self._leaves(features)].sum(axis=1) / self._roots.shape[0])
 
-    def predict(self, X: pd.DataFrame) -> np.ndarray:
-        """Return the most probable class of each row of ``X``."""
-        return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
+    def predict(self, features: pd.DataFrame) -> np.ndarray:
+        """Return the most probable class of each row of ``features``."""
+        return self.classes_[np.argmax(self.predict_proba(features), axis=1)]

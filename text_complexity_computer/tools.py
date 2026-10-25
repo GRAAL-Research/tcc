@@ -1,7 +1,7 @@
 import re
 import sys
-from importlib.resources.abc import Traversable
 from importlib.resources import files
+from importlib.resources.abc import Traversable
 
 import ahocorasick
 

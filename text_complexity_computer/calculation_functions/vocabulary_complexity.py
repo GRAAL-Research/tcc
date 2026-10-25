@@ -5,7 +5,7 @@ from math import log
 from spacy.tokens import Doc
 
 from ..tools import resource_path
-from .metrics_utils import get_num_words, safe_divide
+from .metrics_utils import get_num_words, get_num_words_and_letters, safe_divide
 
 
 @cache
@@ -15,7 +15,8 @@ def _easy_words(language: str) -> str:
 
 @cache
 def _word_frequencies(language: str) -> dict[str, float]:
-    return json.loads(resource_path(language, "word_frequencies.json").read_text(encoding="utf-8"))
+    frequencies: dict[str, float] = json.loads(resource_path(language, "word_frequencies.json").read_text("utf-8"))
+    return frequencies
 
 
 def pa(sp_object: Doc, language: str) -> float:
@@ -45,7 +46,7 @@ def nlm(sp_object: Doc) -> float:
     Returns:
         float: average size of words
     """
-    num_word, num_letter = get_num_words(sp_object, get_size=True)
+    num_word, num_letter = get_num_words_and_letters(sp_object)
     return safe_divide(num_letter, num_word)
 
 
