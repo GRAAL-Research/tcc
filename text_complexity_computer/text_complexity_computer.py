@@ -1,3 +1,4 @@
+import subprocess
 import warnings
 from collections.abc import Callable, Iterable
 from functools import partial
@@ -57,14 +58,23 @@ def _load_spacy_model(model_name: str) -> Language:
     try:
         return spacy.load(model_name)
     except OSError:
+        pass
+    try:
         download(model_name)
         return spacy.load(model_name)
+    except (OSError, SystemExit, subprocess.CalledProcessError) as error:
+        # spacy.cli.download relies on pip, which environments created by uv do not ship.
+        raise OSError(
+            f"The spaCy model {model_name!r} is not installed and could not be downloaded. "
+            f"Install it with `python -m spacy download {model_name}` or `uv pip install {model_name}` "
+            "(see https://spacy.io/models/fr)."
+        ) from error
 
 
 def _normalize_metrics(metrics: Iterable[str] | str | None) -> list[str]:
     if metrics is None:
         return []
-    if metrics == "all":
+    if isinstance(metrics, str) and metrics == "all":  # isinstance first: an array compares element-wise
         return list(METRICS)
     selected = [metrics] if isinstance(metrics, str) else list(metrics)
     unknown = sorted(set(selected) - set(METRICS))
@@ -88,7 +98,9 @@ class TextComplexityComputer:
     """
 
     def __init__(self, scaler: ScalerName | None = "MinMaxScaler", verbosity: int = 1) -> None:
-        if scaler is not None and scaler not in SCALERS:
+        if not scaler:  # None, or a falsy value such as False or "" accepted by earlier versions
+            scaler = None
+        elif scaler not in SCALERS:
             raise ValueError(f"Unknown scaler {scaler!r}. Choose one of {SCALERS} or None.")
 
         self.tagger = _load_spacy_model(SPACY_MODEL_NAME)
@@ -157,7 +169,12 @@ class TextComplexityComputer:
 
         sp_object = self.tagger(text)
         scores: dict[str, float] = dict.fromkeys(METRICS, 0.0)
-        scores.update({metric: METRICS[metric](sp_object) for metric in selected_metrics})
+        computed: dict[Callable[[Doc], float], float] = {}  # "mattr" and "mtld" share the same function
+        for metric in selected_metrics:
+            function = METRICS[metric]
+            if function not in computed:
+                computed[function] = function(sp_object)
+            scores[metric] = computed[function]
 
         biber_names = list(biberpy.dimnames.values())
         if with_biberpy:

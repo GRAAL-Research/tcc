@@ -3,7 +3,8 @@ import pytest
 import spacy
 from spacy.tokens import Doc
 
-from text_complexity_computer import METRICS, TextComplexityComputer
+from text_complexity_computer import METRICS, TextComplexityComputer, clean_text
+from text_complexity_computer import text_complexity_computer as tcc_module
 from text_complexity_computer.calculation_functions import biberpy
 
 TEXT = "Le chat dort sur le tapis. Il fait beau aujourd'hui."
@@ -19,6 +20,26 @@ class TestInit:
             tcc = TextComplexityComputer(scaler=None)
 
         assert tcc.scaler is None
+
+    @pytest.mark.parametrize("falsy_scaler", [False, ""])
+    def test_falsy_scaler_means_no_scaler(self, falsy_scaler: object) -> None:
+        with pytest.warns(UserWarning, match="without scaler"):
+            tcc = TextComplexityComputer(scaler=falsy_scaler)  # type: ignore[arg-type]
+
+        assert tcc.scaler is None
+
+    def test_missing_spacy_model_without_pip_gives_install_hint(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        def missing_model(name: str) -> None:
+            raise OSError(f"[E050] Can't find model '{name}'.")
+
+        def download_without_pip(name: str) -> None:
+            raise SystemExit(1)
+
+        monkeypatch.setattr(spacy, "load", missing_model)
+        monkeypatch.setattr(tcc_module, "download", download_without_pip)
+
+        with pytest.raises(OSError, match="python -m spacy download fr_core_news_sm"):
+            TextComplexityComputer()
 
 
 class TestGetMetricsScores:
@@ -47,9 +68,23 @@ class TestGetMetricsScores:
 
         assert scores.shape == (1, 0)
 
+    def test_metrics_as_numpy_array(self, tcc: TextComplexityComputer) -> None:
+        scores = tcc.get_metrics_scores(TEXT, metrics=np.array(["nlm", "mls"]), with_biberpy=False)
+
+        assert list(scores.columns) == ["mls", "nlm"]
+
+    def test_mattr_and_mtld_share_the_same_value(self, tcc: TextComplexityComputer) -> None:
+        scores = tcc.get_metrics_scores(TEXT * 20, metrics=["mattr", "mtld"], with_biberpy=False)
+
+        assert scores["mattr"].iloc[0] == scores["mtld"].iloc[0]
+
     def test_unknown_metric_raises(self, tcc: TextComplexityComputer) -> None:
         with pytest.raises(ValueError, match="not_a_metric"):
             tcc.get_metrics_scores(TEXT, metrics=["mls", "not_a_metric"])
+
+
+def test_clean_text_is_exported() -> None:
+    assert clean_text("Il  fait   beau.") == "Il fait beau."
 
 
 class TestCompute:

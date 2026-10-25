@@ -1,3 +1,4 @@
+import io
 import re
 import sys
 from importlib.resources import files
@@ -52,7 +53,7 @@ def read_word_lists(file_path: Traversable, verbosity: int) -> tuple[WordLists, 
     """
     word_lists: WordLists = {}
     mwe_list: MweList = {}
-    lines = file_path.read_text(encoding="utf8").splitlines(keepends=True)
+    lines = io.StringIO(file_path.read_text(encoding="utf8")).readlines()
     for i, line in enumerate(lines):
         x = line.strip().split(" = ")
         if len(x) == 2:
@@ -85,8 +86,8 @@ def read_num_list(file_path: Traversable) -> TagList:
     This produces a "most frequent tag" substitute for tagging.
     """
     tag_list: TagList = {}
-    for line in file_path.read_text(encoding="utf8").splitlines():
+    for line in io.StringIO(file_path.read_text(encoding="utf8")).readlines():
         x = line.rstrip().split()
-        if len(x) == 5 and x[1] not in tag_list:
+        if len(x) == 5 and x[1].lower() not in tag_list:
             tag_list[x[1].lower()] = (x[0], x[2], x[3], x[4])
     return tag_list
